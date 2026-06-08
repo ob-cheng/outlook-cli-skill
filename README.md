@@ -18,10 +18,14 @@ Works with any AI agent that supports the [Agent Skills Spec](https://agentskill
 
 | Feature | Description |
 |---|---|
-| **Email** | Search by folder, date, sender, domain, keywords. Read, send, reply, forward. Export to markdown or JSON. |
-| **Calendar** | List events, check schedules, create meetings. |
-| **Tasks** | Create, list, update, and complete Outlook tasks. |
-| **Notes** | Create and manage Outlook notes from the terminal. |
+| **Email** | Search by folder, date, sender, domain, keywords. Read, send, reply, forward. |
+| **Calendar** | List events, check schedules, create meetings with attendees. |
+| **Tasks** | Create, list, update, and complete Outlook tasks with priority, due dates, categories. |
+| **Notes** | Create and manage Outlook notes from the terminal with color-coding. |
+| **Export** | Export emails to markdown (Obsidian-ready) or JSON. Incremental tracking, thread grouping, batch mode, stdout. |
+| **Folders** | List all Outlook folders by name, path, and item count. |
+| **People Directory** | Auto-tracked contact list — every email read adds unknown senders/recipients. Lookup, add, list. |
+| **Config** | Draft-only vs direct send, custom drafting instructions, humanizer integration. |
 
 Under the hood it uses **COM automation** against the running Outlook desktop client — the same API Outlook itself uses. That means zero cloud dependencies, zero setup ceremonies, zero rate limits.
 
@@ -135,12 +139,15 @@ python outlook.py cal list --days 7
 python outlook.py cal create --subject "Standup" --start "2025-01-15 09:00"
 
 # Tasks
-python outlook.py task list
-python outlook.py task create --subject "Review PR"
+python outlook.py tasks list
+python outlook.py tasks create --subject "Review PR"
 
 # Notes
-python outlook.py note list
-python outlook.py note create --subject "Ideas"
+python outlook.py notes list
+python outlook.py notes create --subject "Ideas"
+
+# Folders
+python outlook.py folders
 
 # Config
 python outlook.py config show

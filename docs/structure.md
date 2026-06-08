@@ -28,8 +28,6 @@ outlook-cli-skill/
 ├── scripts/
 │   ├── validate-export.py
 │   └── format-email.py
-├── assets/
-│   └── email-template.md
 ├── requirements.txt
 └── README.md
 ```

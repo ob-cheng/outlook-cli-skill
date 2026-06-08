@@ -55,16 +55,45 @@ The agent will produce output like: *"I've saved this as a draft. Review and sen
 
 This is enforced at the script level. No configuration needed. No footguns.
 
-### Enable Direct Sending (Optional)
+### Configuration
 
-If you want your agent to send emails without the draft step, set `OUTLOOK_CLI_ALLOW_SEND=1`. Even with this enabled, the agent will still ask for confirmation before each send — you always get a chance to say no.
+All settings are stored in `~/.outlook-cli/config.json`. Manage them via the CLI:
 
-| Platform | How |
-|---|---|
-| **Hermes** | `env.OUTLOOK_CLI_ALLOW_SEND: "1"` in `~/.hermes/config.yaml` |
-| **Claude Code** | `{"env": {"OUTLOOK_CLI_ALLOW_SEND": "1"}}` in `.claude/settings.json` |
-| **OpenClaw** | `{"env": {"vars": {"OUTLOOK_CLI_ALLOW_SEND": "1"}}}` in `~/.openclaw/openclaw.json` |
-| **Any agent (Windows)** | System environment variable `OUTLOOK_CLI_ALLOW_SEND=1` |
+```bash
+# View current settings
+python outlook.py config show
+
+# Enable direct sending
+python outlook.py config set send_mode send
+
+# Set custom drafting instructions (agent follows these)
+python outlook.py config set draft_instructions "Keep it under 3 sentences, mention next steps"
+
+# Enable humanizer processing
+python outlook.py config set humanizer_enabled true
+
+# Reset to default
+python outlook.py config clear send_mode
+```
+
+**Settings reference:**
+
+| Key | Default | Description |
+|---|---|---|
+| `send_mode` | `draft` | `draft` or `send` — controls whether `--send` flag is allowed |
+| `draft_instructions` | `""` | Free-text instructions for the agent when drafting emails |
+| `humanizer_enabled` | `false` | Whether to run the humanizer skill on email bodies |
+
+### Behavior Matrix
+
+| send_mode | `--send` flag? | Result |
+|---|---|---|
+| `draft` | — | ✅ Saved as draft |
+| `draft` | ✅ | ❌ Rejected |
+| `send` | — | ✅ Saved as draft |
+| `send` | ✅ | ✅ Sent immediately |
+
+The `OUTLOOK_CLI_ALLOW_SEND` env var and `--send` flag still work as overrides for backward compatibility. Config takes priority when present.
 
 ## Feature Overview
 
@@ -113,6 +142,13 @@ python outlook.py task create --subject "Review PR"
 # Notes
 python outlook.py note list
 python outlook.py note create --subject "Ideas"
+
+# Config
+python outlook.py config show
+python outlook.py config set send_mode send
+python outlook.py config set draft_instructions "Keep it brief"
+python outlook.py config set humanizer_enabled true
+python outlook.py config clear humanizer_enabled
 ```
 
 ## Project Structure

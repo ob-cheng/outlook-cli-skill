@@ -97,32 +97,60 @@ Run all commands using `${OUTLOOK_CLI_PYTHON:-python}` (set only in WSL; falls b
 | Notes | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" notes list/read/create/delete` |
 | Export | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" export --output DIR [--stdout]` |
 | Folders | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" folders` |
+| Config | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" config show/set/clear` |
+
+## First-Time Setup
+
+On first activation (or when sending the first email), ask the user:
+
+> "Do you want to set custom drafting instructions? (e.g. 'Keep it brief', 'Always mention next steps')"
+
+- If yes → run `outlook.py config set draft_instructions "<their rules>"`
+- If no → skip (instructions are empty by default)
+
+> "Do you want to enable humanizer processing for email drafts?"
+
+- If yes → run `outlook.py config set humanizer_enabled true`
+- If no → skip (disabled by default)
+
+These settings are read by the CLI on every send/reply/forward and printed as status tags so the workflow is visible.
+
+## Draft Workflow
+
+Before every send/reply/forward:
+
+1. Run `outlook.py config show` to read all settings
+2. Compose the email body
+3. If `draft_instructions` is set → follow them while drafting
+4. If `humanizer_enabled` is true → load `humanizer` skill and run the pattern checklist
+5. Pass the final body to the CLI
+
+The CLI will print status tags showing what's active. If the tags don't match expectations, something was skipped.
 
 ## Humanize Before Sending
 
-After composing any email body, load `humanizer` and run it through the pattern checklist before passing to CLI. If not found, ask user whether to install from [github.com/blader/humanizer](https://github.com/blader/humanizer). If declined, proceed with the raw draft and note it wasn't humanized.
+After composing any email body, if `humanizer_enabled` is true in config, load `humanizer` and run it through the pattern checklist. If the skill is not found, ask user whether to install from [github.com/blader/humanizer](https://github.com/blader/humanizer). If declined, proceed with the raw draft and note it wasn't humanized.
 
 ## Safety Rules
 
-**Draft-Only Mode (enforced at script level):**
-The CLI defaults to draft mode. All send/reply/forward commands create drafts by default — **no flag needed.**
+**Draft-Only Mode:** The CLI defaults to draft mode. All send/reply/forward commands create drafts by default.
 
 - Default behavior: emails saved as drafts
 - Tell the user: "I've saved this as a draft. You can review and send it from Outlook."
-- There is no `--draft` flag. Drafts are the default — always.
+- To enable direct sending: `outlook.py config set send_mode send`
+- Already enabled config is printed as a status tag on every send/reply/forward
+- The `--send` flag and `OUTLOOK_CLI_ALLOW_SEND` env var still work as overrides
 
-**Behavior matrix:**
+**Behavior matrix (config):**
 
-| Env var set? | `--send` passed? | Result |
+| send_mode | `--send` passed? | Result |
 |---|---|---|
-| — | — | ✅ Saved as draft |
-| — | ✅ | ❌ Error: "env var not set" |
-| ✅ | — | ✅ **Saved as draft** |
-| ✅ | ✅ | ✅ Sent immediately |
+| draft | — | ✅ Saved as draft |
+| draft | ✅ | ❌ Error: "send not allowed" |
+| send | — | ✅ **Saved as draft** |
+| send | ✅ | ✅ Sent immediately |
 
-Key rule: **`--send` is the only way to send.** Without it, even with the env var set, the email is saved as a draft. There's no way to accidentally send.
-
-> **Direct sending:** See [references/direct-send.md](references/direct-send.md) for enabling and using `--send`.
+Key rule: **`--send` is the only way to direct-send.** Without it, even with `send_mode: send`, the email is saved as a draft. No way to accidentally send.
 
 **Always confirm before:**
 

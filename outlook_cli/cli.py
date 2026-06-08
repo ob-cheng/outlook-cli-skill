@@ -9,16 +9,28 @@ from pathlib import Path
 
 
 def _check_send_allowed() -> tuple[bool, str]:
-    """Check if direct sending is allowed via environment variable.
+    """Check if direct sending is allowed.
+
+    Checks config file first (send_mode), then falls back to env var.
+    Config takes priority.
 
     Returns:
         tuple: (allowed: bool, error_message: str or None)
     """
+    # Config file takes priority
+    from .core.config import ConfigManager
+    cfg = ConfigManager()
+    config_mode = cfg.get('send_mode')
+    if config_mode == 'send':
+        return True, None
+
+    # Fallback: env var
     if os.environ.get('OUTLOOK_CLI_ALLOW_SEND', '').strip() == '1':
         return True, None
     return False, (
         "Direct sending is disabled for safety. Emails are saved as drafts by default.\n"
-        "To enable direct sending, set environment variable: OUTLOOK_CLI_ALLOW_SEND=1\n"
+        "To enable direct sending, set: python outlook.py config set send_mode send\n"
+        "Or set environment variable: OUTLOOK_CLI_ALLOW_SEND=1\n"
         "Or remove --send flag to save as draft."
     )
 
@@ -414,6 +426,37 @@ def create_parser() -> argparse.ArgumentParser:
     notes_delete.add_argument('note_id', help='Note ID (EntryID)')
     notes_delete.add_argument('--json', action='store_true', help='Output as JSON')
 
+    # =========================================================================
+    # config command
+    # =========================================================================
+    config_parser = subparsers.add_parser(
+        'config',
+        help='View or change configuration (send mode, drafting rules, humanizer)',
+    )
+    config_subparsers = config_parser.add_subparsers(dest='config_command', help='Config commands')
+
+    # config show
+    config_show = config_subparsers.add_parser('show', help='Show all settings')
+
+    # config set
+    config_set = config_subparsers.add_parser('set', help='Set a config value')
+    config_set.add_argument(
+        'key',
+        type=str,
+        choices=['send_mode', 'draft_instructions', 'humanizer_enabled'],
+        help='Config key to set',
+    )
+    config_set.add_argument('value', type=str, help='Value to set')
+
+    # config clear
+    config_clear = config_subparsers.add_parser('clear', help='Reset a config key to default')
+    config_clear.add_argument(
+        'key',
+        type=str,
+        choices=['send_mode', 'draft_instructions', 'humanizer_enabled'],
+        help='Config key to reset',
+    )
+
     return parser
 
 
@@ -723,7 +766,6 @@ def cmd_send(args) -> int:
     json_mode = getattr(args, 'json', False)
 
     # Determine if we should send immediately
-    # --send flag requires OUTLOOK_CLI_ALLOW_SEND env var
     send_immediately = False
     if getattr(args, 'send', False):
         allowed, error_msg = _check_send_allowed()
@@ -736,6 +778,9 @@ def cmd_send(args) -> int:
         send_immediately = True
 
     if not json_mode:
+        from .core.config import ConfigManager
+        for tag in ConfigManager().status_tags():
+            print(tag)
         print("Connecting to Outlook...")
     _, namespace = connect_to_outlook()
 
@@ -789,6 +834,9 @@ def cmd_reply(args) -> int:
         send_immediately = True
 
     if not json_mode:
+        from .core.config import ConfigManager
+        for tag in ConfigManager().status_tags():
+            print(tag)
         print("Connecting to Outlook...")
     _, namespace = connect_to_outlook()
 
@@ -834,6 +882,9 @@ def cmd_forward(args) -> int:
         send_immediately = True
 
     if not json_mode:
+        from .core.config import ConfigManager
+        for tag in ConfigManager().status_tags():
+            print(tag)
         print("Connecting to Outlook...")
     _, namespace = connect_to_outlook()
 
@@ -867,6 +918,52 @@ def cmd_forward(args) -> int:
     else:
         print(f"✗ {message}")
         return 1
+
+
+def cmd_config(args) -> int:
+    """Handle 'config' command."""
+    from .core.config import ConfigManager
+
+    cfg = ConfigManager()
+
+    if not args.config_command:
+        data = cfg.show()
+        print(json.dumps(data, indent=2))
+        return 0
+
+    if args.config_command == 'show':
+        data = cfg.show()
+        print(json.dumps(data, indent=2))
+        return 0
+
+    if args.config_command == 'set':
+        key = args.key
+        value: str | bool = args.value
+
+        if key == 'humanizer_enabled':
+            if value.lower() in ('true', '1', 'yes'):
+                value = True
+            elif value.lower() in ('false', '0', 'no'):
+                value = False
+            else:
+                print(f"Invalid value for {key}: expected true/false, got '{value}'")
+                return 1
+
+        if key == 'send_mode':
+            if value not in ('draft', 'send'):
+                print(f"Invalid value for send_mode: expected 'draft' or 'send', got '{value}'")
+                return 1
+
+        cfg.set(key, value)
+        print(f"✓ {key} = {json.dumps(value)}")
+        return 0
+
+    if args.config_command == 'clear':
+        cfg.clear(args.key)
+        print(f"✓ {args.key} reset to default")
+        return 0
+
+    return 0
 
 
 def _parse_datetime(dt_str: str) -> datetime:
@@ -1236,6 +1333,8 @@ def main() -> int:
             return cmd_reply(args)
         elif args.command == 'forward':
             return cmd_forward(args)
+        elif args.command == 'config':
+            return cmd_config(args)
         elif args.command == 'cal':
             return cmd_cal(args)
         elif args.command == 'tasks':

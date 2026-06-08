@@ -2,14 +2,14 @@
 
 Complete reference for all outlook-cli commands and options.
 
-All commands use `${CLAUDE_SKILL_DIR}/outlook.py` as the entry point.
+All commands use `${SKILL_DIR}/outlook.py` as the entry point.
 
 ## Email Commands
 
 ### search - Find emails
 
 ```bash
-python "${CLAUDE_SKILL_DIR}/outlook.py" search [options]
+python "${SKILL_DIR}/outlook.py" search [options]
 ```
 
 | Option | Description |
@@ -49,7 +49,8 @@ python outlook.py send --to ADDRESS --subject TEXT --body TEXT [options]
 | `--bcc ADDRESS` | BCC recipients (comma-separated) |
 | `--attach PATH` | File attachment (can specify multiple) |
 | `--html` | Body is HTML formatted |
-| `--draft` | Save as draft instead of sending |
+| `--draft` | Always on by default — all emails saved as drafts |
+| `--send` | Send immediately (requires OUTLOOK_CLI_ALLOW_SEND=1 env var) |
 | `--json` | Output as JSON |
 
 ### reply - Reply to email
@@ -64,7 +65,8 @@ python outlook.py reply <message-id> --body TEXT [options]
 | `--all` | Reply to all recipients |
 | `--attach PATH` | Add attachment (can specify multiple) |
 | `--html` | Body is HTML |
-| `--draft` | Save as draft |
+| `--draft` | Always on by default |
+| `--send` | Send immediately (requires env var) |
 | `--json` | Output as JSON |
 
 ### forward - Forward email
@@ -81,7 +83,8 @@ python outlook.py forward <message-id> --to ADDRESS [options]
 | `--bcc ADDRESS` | BCC recipients |
 | `--attach PATH` | Additional attachment |
 | `--html` | Body is HTML |
-| `--draft` | Save as draft |
+| `--draft` | Always on by default |
+| `--send` | Send immediately (requires env var) |
 | `--json` | Output as JSON |
 
 ### export - Export emails to files or stdout

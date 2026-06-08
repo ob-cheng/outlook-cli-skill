@@ -198,7 +198,8 @@ outlook-cli-skill/
 ├── outlook_cli/          # CLI implementation
 │   ├── cli.py
 │   ├── core/
-│   └── services/
+│   ├── services/
+│   └── utils/
 ├── references/
 │   ├── commands.md
 │   ├── json-schemas.md

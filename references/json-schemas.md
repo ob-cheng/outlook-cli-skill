@@ -1,10 +1,10 @@
 # JSON Output Schemas
 
-All commands support `--json` for structured output. This reference documents the JSON schemas.
+All commands support `--json` for structured output. This reference documents the actual JSON schemas produced by the CLI.
 
 ## Response Wrapper
 
-All responses follow this pattern:
+All commands that return JSON use this pattern:
 
 **Success:**
 ```json
@@ -23,13 +23,15 @@ All responses follow this pattern:
 }
 ```
 
-Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`, `create_failed`, `delete_failed`, `complete_failed`
+Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`, `create_failed`, `delete_failed`, `complete_failed`, `send_not_allowed`
 
 ---
 
 ## Email Schemas
 
 ### search --json
+
+Returns a summary (no body content):
 
 ```json
 {
@@ -39,20 +41,26 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
     {
       "message_id": "00000000ABC123...",
       "subject": "Meeting tomorrow",
-      "sender": "alice@company.com",
-      "sender_name": "Alice Smith",
-      "to": ["bob@company.com"],
-      "cc": [],
+      "sender": "Alice Smith <alice@company.com>",
+      "sender_clean": "Alice Smith",
+      "sender_smtp": "alice@company.com",
+      "to": "bob@company.com",
+      "to_emails": ["bob@company.com"],
+      "cc": null,
+      "cc_emails": [],
       "date": "2026-06-08T09:30:00",
+      "is_sent": false,
       "is_read": false,
-      "has_attachments": true,
-      "folder": "Inbox"
+      "importance": "normal",
+      "has_attachments": true
     }
   ]
 }
 ```
 
 ### read --json
+
+Returns full email with body content:
 
 ```json
 {
@@ -62,22 +70,20 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
     {
       "message_id": "00000000ABC123...",
       "subject": "Meeting tomorrow",
-      "sender": "alice@company.com",
-      "sender_name": "Alice Smith",
-      "to": ["bob@company.com"],
-      "cc": [],
+      "sender": "Alice Smith <alice@company.com>",
+      "sender_clean": "Alice Smith",
+      "sender_smtp": "alice@company.com",
+      "to": "bob@company.com; carol@company.com",
+      "to_emails": ["bob@company.com", "carol@company.com"],
+      "cc": null,
+      "cc_emails": [],
       "date": "2026-06-08T09:30:00",
+      "is_sent": false,
       "is_read": true,
+      "importance": "normal",
       "has_attachments": true,
-      "folder": "Inbox",
-      "body": "Full email body text here...",
-      "body_html": "<html>...</html>",
-      "attachments": [
-        {
-          "name": "document.pdf",
-          "size": 102400
-        }
-      ]
+      "text_body": "Hi Bob,\n\nLet's meet tomorrow at 2pm...",
+      "html_body": "<html><body>Hi Bob,<br><br>Let's meet tomorrow at 2pm...</body></html>"
     }
   ],
   "not_found": null
@@ -89,12 +95,23 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
 ```json
 {
   "success": true,
+  "message": "Email saved to Drafts (ID: 00000000DRAFT123...)",
+  "draft": true
+}
+```
+
+When sent directly (`--send` with env var enabled):
+```json
+{
+  "success": true,
   "message": "Email sent successfully",
   "draft": false
 }
 ```
 
 ### export --json (summary)
+
+Returns export operation summary (not email content):
 
 ```json
 {
@@ -109,27 +126,56 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
 }
 ```
 
-### export --stdout (direct JSON)
+### export --stdout (direct JSON to terminal)
+
+Returns email data directly (no `success` wrapper). This is the raw output for agent/pipeline consumption:
 
 ```json
 {
-  "exported_at": "2026-06-08T10:30:00",
-  "count": 15,
+  "export_date": "2026-06-08T10:30:00",
+  "thread_count": 3,
+  "email_count": 15,
   "threads": [
     {
-      "thread_id": "thread_abc123",
       "subject": "Project Update",
-      "participants": ["alice@co.com", "bob@co.com"],
       "message_count": 3,
+      "date_start": "2026-06-07T09:00:00",
+      "date_end": "2026-06-08T14:00:00",
+      "participants": ["Alice Smith", "Bob Jones"],
       "messages": [
         {
-          "message_id": "...",
-          "subject": "Project Update",
-          "sender": "alice@co.com",
-          "date": "2026-06-08T09:00:00",
-          "body": "..."
+          "id": "00000000ABC123...",
+          "subject": "Re: Project Update",
+          "from": "Alice Smith",
+          "from_email": "alice@company.com",
+          "to": ["bob@company.com"],
+          "cc": null,
+          "date": "2026-06-08T14:00:00",
+          "direction": "received",
+          "body": "Updated status for the project..."
         }
       ]
+    }
+  ]
+}
+```
+
+With `--no-threads`:
+```json
+{
+  "export_date": "2026-06-08T10:30:00",
+  "email_count": 15,
+  "emails": [
+    {
+      "id": "00000000ABC123...",
+      "subject": "Project Update",
+      "from": "Alice Smith",
+      "from_email": "alice@company.com",
+      "to": ["bob@company.com"],
+      "cc": null,
+      "date": "2026-06-08T14:00:00",
+      "direction": "received",
+      "body": "Updated status for the project..."
     }
   ]
 }
@@ -142,20 +188,29 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
   "success": true,
   "folders": [
     {
+      "name": "user@example.com",
+      "path": "user@example.com",
+      "level": 0,
+      "count": 0,
+      "is_store": true
+    },
+    {
       "name": "Inbox",
-      "path": "\\\\Inbox",
-      "unread_count": 5,
-      "total_count": 150
+      "path": "user@example.com/Inbox",
+      "level": 1,
+      "count": 150
     },
     {
       "name": "Sent Items",
-      "path": "\\\\Sent Items",
-      "unread_count": 0,
-      "total_count": 500
+      "path": "user@example.com/Sent Items",
+      "level": 1,
+      "count": 500
     }
   ]
 }
 ```
+
+**Note:** `count` is the total item count in the folder (not unread count). Store-level entries have `is_store: true`.
 
 ---
 
@@ -169,15 +224,21 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
   "count": 5,
   "events": [
     {
-      "event_id": "00000000DEF456...",
       "subject": "Team Standup",
       "start": "2026-06-08T09:00:00",
       "end": "2026-06-08T09:30:00",
       "location": "Room A",
-      "organizer": "alice@company.com",
+      "body": "Weekly team sync",
+      "organizer": "Alice Smith",
+      "required_attendees": ["bob@company.com"],
+      "optional_attendees": [],
       "is_all_day": false,
       "is_recurring": true,
-      "response_status": "accepted"
+      "recurrence_pattern": "Weekly",
+      "entry_id": "00000000DEF456...",
+      "categories": ["Work"],
+      "importance": "normal",
+      "reminder_minutes": 15
     }
   ]
 }
@@ -185,24 +246,27 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
 
 ### cal read --json
 
+Same schema as list but for a single event, wrapped in `event`:
+
 ```json
 {
   "success": true,
   "event": {
-    "event_id": "00000000DEF456...",
     "subject": "Team Standup",
     "start": "2026-06-08T09:00:00",
     "end": "2026-06-08T09:30:00",
     "location": "Room A",
     "body": "Weekly team sync meeting",
-    "organizer": "alice@company.com",
+    "organizer": "Alice Smith",
     "required_attendees": ["bob@company.com", "carol@company.com"],
     "optional_attendees": [],
     "is_all_day": false,
     "is_recurring": true,
     "recurrence_pattern": "Weekly",
-    "reminder_minutes": 15,
-    "response_status": "accepted"
+    "entry_id": "00000000DEF456...",
+    "categories": ["Work"],
+    "importance": "normal",
+    "reminder_minutes": 15
   }
 }
 ```
@@ -222,7 +286,7 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
 ```json
 {
   "success": true,
-  "message": "Event deleted"
+  "message": "Event deleted successfully"
 }
 ```
 
@@ -238,14 +302,17 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
   "count": 8,
   "tasks": [
     {
-      "task_id": "00000000TASK123...",
+      "entry_id": "00000000TASK123...",
       "subject": "Review PR #42",
       "status": "not_started",
-      "priority": "high",
-      "due_date": "2026-06-15",
+      "due_date": "2026-06-15T00:00:00",
       "start_date": null,
+      "completed_date": null,
       "percent_complete": 0,
-      "categories": ["Work"]
+      "priority": "high",
+      "body": "Check the implementation details",
+      "categories": ["Work"],
+      "reminder_date": "2026-06-14T09:00:00"
     }
   ]
 }
@@ -253,19 +320,21 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
 
 ### tasks read --json
 
+Same schema but single task wrapped in `task`:
+
 ```json
 {
   "success": true,
   "task": {
-    "task_id": "00000000TASK123...",
+    "entry_id": "00000000TASK123...",
     "subject": "Review PR #42",
-    "body": "Check the implementation details",
     "status": "not_started",
-    "priority": "high",
-    "due_date": "2026-06-15",
+    "due_date": "2026-06-15T00:00:00",
     "start_date": null,
-    "date_completed": null,
+    "completed_date": null,
     "percent_complete": 0,
+    "priority": "high",
+    "body": "Check the implementation details",
     "categories": ["Work"],
     "reminder_date": "2026-06-14T09:00:00"
   }
@@ -297,7 +366,7 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
 ```json
 {
   "success": true,
-  "message": "Task deleted"
+  "message": "Task deleted successfully"
 }
 ```
 
@@ -313,8 +382,9 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
   "count": 3,
   "notes": [
     {
-      "note_id": "00000000NOTE123...",
-      "subject": "Quick note",
+      "entry_id": "00000000NOTE123...",
+      "subject": "(No Subject)",
+      "body": "Remember to follow up on Q2 report",
       "color": "yellow",
       "created": "2026-06-08T10:00:00",
       "modified": "2026-06-08T10:30:00",
@@ -330,9 +400,9 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
 {
   "success": true,
   "note": {
-    "note_id": "00000000NOTE123...",
-    "subject": "Quick note",
-    "body": "Remember to follow up on...",
+    "entry_id": "00000000NOTE123...",
+    "subject": "(No Subject)",
+    "body": "Remember to follow up on Q2 report",
     "color": "yellow",
     "created": "2026-06-08T10:00:00",
     "modified": "2026-06-08T10:30:00",
@@ -355,6 +425,6 @@ Common error codes: `not_found`, `send_failed`, `reply_failed`, `forward_failed`
 ```json
 {
   "success": true,
-  "message": "Note deleted"
+  "message": "Note deleted successfully"
 }
 ```

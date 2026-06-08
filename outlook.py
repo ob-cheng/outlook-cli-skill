@@ -12,7 +12,7 @@ Usage:
     python outlook.py cal list                   # List calendar events
     python outlook.py read <message-id>          # Read single email
 
-Full documentation: https://github.com/ob-cheng/outlook-cli-2.0
+Full documentation: https://github.com/ob-cheng/outlook-cli-skill
 """
 
 import sys

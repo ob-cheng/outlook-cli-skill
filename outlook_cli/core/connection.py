@@ -1,7 +1,5 @@
 """Outlook COM connection management."""
 
-import win32com.client as win32
-
 
 def connect_to_outlook():
     """Establish connection to Outlook via COM.
@@ -10,8 +8,11 @@ def connect_to_outlook():
         tuple: (outlook_app, mapi_namespace)
 
     Raises:
-        Exception: If Outlook is not installed or not running
+        ImportError: If pywin32 is not installed.
+        RuntimeError: If Outlook is not installed or not running.
     """
+    import win32com.client as win32
+
     try:
         outlook = win32.Dispatch('Outlook.Application')
         namespace = outlook.GetNamespace("MAPI")

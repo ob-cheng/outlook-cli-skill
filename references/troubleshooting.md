@@ -15,7 +15,7 @@ Common issues and solutions for outlook-cli.
 
 ```bash
 # Test connection
-python "${CLAUDE_SKILL_DIR}/outlook.py" folders --json
+python "${SKILL_DIR}/outlook.py" folders --json
 ```
 
 ### "Access denied" or permission errors
@@ -40,13 +40,13 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" folders --json
 
 ```bash
 # Broaden search
-python "${CLAUDE_SKILL_DIR}/outlook.py" search --days 30 --json
+python "${SKILL_DIR}/outlook.py" search --days 30 --json
 
 # Check available folders
-python "${CLAUDE_SKILL_DIR}/outlook.py" folders --json
+python "${SKILL_DIR}/outlook.py" folders --json
 
 # Search specific folder
-python "${CLAUDE_SKILL_DIR}/outlook.py" search --folder "Inbox" --days 30 --json
+python "${SKILL_DIR}/outlook.py" search --folder "Inbox" --days 30 --json
 ```
 
 ### Wrong folder searched
@@ -55,10 +55,10 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" search --folder "Inbox" --days 30 --json
 
 ```bash
 # Search all folders explicitly
-python "${CLAUDE_SKILL_DIR}/outlook.py" search --folder "Inbox" --folder "Sent Items" --folder "Archive" --days 7
+python "${SKILL_DIR}/outlook.py" search --folder "Inbox" --folder "Sent Items" --folder "Archive" --days 7
 
 # List all available folders first
-python "${CLAUDE_SKILL_DIR}/outlook.py" folders
+python "${SKILL_DIR}/outlook.py" folders
 ```
 
 ### Message ID not found
@@ -71,7 +71,7 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" folders
 
 ```bash
 # Search by subject/sender instead
-python "${CLAUDE_SKILL_DIR}/outlook.py" search --keyword "subject text" --filter-email sender@co.com --json
+python "${SKILL_DIR}/outlook.py" search --keyword "subject text" --filter-email sender@co.com --json
 ```
 
 ---
@@ -87,7 +87,7 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" search --keyword "subject text" --filter
 mkdir -p ./exports
 
 # Then export
-python "${CLAUDE_SKILL_DIR}/outlook.py" export --output ./exports --days 7
+python "${SKILL_DIR}/outlook.py" export --output ./exports --days 7
 ```
 
 ### Incremental export not working
@@ -95,14 +95,14 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" export --output ./exports --days 7
 **Cause:** State file missing or corrupted.
 
 ```bash
-# Check state file exists
-ls ./exports/extraction_state.json
+# Check state file exists (stored in the skill directory, not the export directory)
+ls ${SKILL_DIR}/extraction_state.json
 
 # Reset by deleting state file
-rm ./exports/extraction_state.json
+rm ${SKILL_DIR}/extraction_state.json
 
 # Run fresh export
-python "${CLAUDE_SKILL_DIR}/outlook.py" export --output ./exports --days 30 --incremental
+python "${SKILL_DIR}/outlook.py" export --output ./exports --days 30 --incremental
 ```
 
 ### Large export taking too long
@@ -114,7 +114,7 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" export --output ./exports --days 30 --in
 
 ```bash
 # Narrow scope
-python "${CLAUDE_SKILL_DIR}/outlook.py" export --output ./exports \
+python "${SKILL_DIR}/outlook.py" export --output ./exports \
   --days 7 \
   --filter-email important@co.com \
   --format json --batch
@@ -123,6 +123,16 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" export --output ./exports \
 ---
 
 ## Calendar Issues
+
+### "No events found" or empty results
+
+**Cause:** Calendar commands use Outlook's default account. In multi-account setups (iCloud + Exchange + Outlook.com), the default may not be the one with your calendar data.
+
+**Solution:** Set the desired account as default in Outlook:
+1. File → Account Settings → Data Files
+2. Select the account with your calendar/tasks/notes
+3. Click "Set as Default"
+4. Restart Outlook
 
 ### Event not created
 
@@ -133,7 +143,7 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" export --output ./exports \
 
 ```bash
 # Correct datetime format: "YYYY-MM-DD HH:MM"
-python "${CLAUDE_SKILL_DIR}/outlook.py" cal create \
+python "${SKILL_DIR}/outlook.py" cal create \
   --subject "Test Event" \
   --start "2026-06-10 14:00" \
   --end "2026-06-10 15:00" \
@@ -170,10 +180,10 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" cal create \
 
 ```bash
 # Mark complete
-python "${CLAUDE_SKILL_DIR}/outlook.py" tasks complete <task-id> --json
+python "${SKILL_DIR}/outlook.py" tasks complete <task-id> --json
 
 # Verify
-python "${CLAUDE_SKILL_DIR}/outlook.py" tasks read <task-id> --json
+python "${SKILL_DIR}/outlook.py" tasks read <task-id> --json
 ```
 
 ### Tasks not appearing in list
@@ -182,7 +192,7 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" tasks read <task-id> --json
 
 ```bash
 # Include completed tasks
-python "${CLAUDE_SKILL_DIR}/outlook.py" tasks list --all --json
+python "${SKILL_DIR}/outlook.py" tasks list --all --json
 ```
 
 ---
@@ -195,13 +205,13 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" tasks list --all --json
 
 ```bash
 # Get just email subjects
-python "${CLAUDE_SKILL_DIR}/outlook.py" search --json | jq '.emails[].subject'
+python "${SKILL_DIR}/outlook.py" search --json | jq '.emails[].subject'
 
 # Filter by condition
-python "${CLAUDE_SKILL_DIR}/outlook.py" tasks list --json | jq '.tasks[] | select(.priority == "high")'
+python "${SKILL_DIR}/outlook.py" tasks list --json | jq '.tasks[] | select(.priority == "high")'
 
 # Count results
-python "${CLAUDE_SKILL_DIR}/outlook.py" search --unread --json | jq '.count'
+python "${SKILL_DIR}/outlook.py" search --unread --json | jq '.count'
 ```
 
 ### Special characters in output
@@ -214,7 +224,7 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" search --unread --json | jq '.count'
 
 ```bash
 # JSON output handles encoding
-python "${CLAUDE_SKILL_DIR}/outlook.py" read <id> --json | jq -r '.emails[0].body'
+python "${SKILL_DIR}/outlook.py" read <id> --json | jq -r '.emails[0].body'
 ```
 
 ---
@@ -231,20 +241,20 @@ python "${CLAUDE_SKILL_DIR}/outlook.py" read <id> --json | jq -r '.emails[0].bod
 
 ```bash
 # Use stdout mode for streaming
-python "${CLAUDE_SKILL_DIR}/outlook.py" export --output . --stdout --days 7 | process-tool
+python "${SKILL_DIR}/outlook.py" export --output . --stdout --days 7 | process-tool
 
 # Or use incremental mode
-python "${CLAUDE_SKILL_DIR}/outlook.py" export --output ./exports --incremental
+python "${SKILL_DIR}/outlook.py" export --output ./exports --incremental
 ```
 
 ### Reduce API calls
 
 ```bash
 # Batch operations where possible
-python "${CLAUDE_SKILL_DIR}/outlook.py" read <id1> <id2> <id3> --json  # One call for multiple
+python "${SKILL_DIR}/outlook.py" read <id1> <id2> <id3> --json  # One call for multiple
 
 # Use search with export flag
-python "${CLAUDE_SKILL_DIR}/outlook.py" search --keyword "topic" --export ./output  # Search + export in one
+python "${SKILL_DIR}/outlook.py" search --keyword "topic" --export ./output  # Search + export in one
 ```
 
 ---
@@ -270,6 +280,6 @@ If issues persist:
 
 1. Check Outlook is running and responsive
 2. Verify Python environment: `python --version`
-3. Test basic command: `python "${CLAUDE_SKILL_DIR}/outlook.py" folders --json`
+3. Test basic command: `python "${SKILL_DIR}/outlook.py" folders --json`
 4. Check error message in JSON output
 5. Review Outlook's own error dialogs

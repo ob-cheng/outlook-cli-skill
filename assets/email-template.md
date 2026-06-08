@@ -27,3 +27,10 @@ subject: "{{subject}}"
 - {{name}} ({{size_formatted}})
 {{/each}}
 {{/if}}
+
+<!-- 
+  NOTE: This is a reference template only — there is currently no built-in
+  template renderer in the CLI. The export service hardcodes its markdown
+  format. This template is provided as a guide for the expected structure
+  of exported email files.
+-->

@@ -36,6 +36,34 @@ Your agent can attach files to emails. Just provide the file path. Multiple atta
 ### Reply and forward behavior
 When replying, your agent's response is added **above** the original message content (below a separator). Forwards work the same way — your added message goes on top.
 
+### Custom drafting instructions
+You can tell your agent how to write your emails. Just say something like:
+
+> "Set my drafting instructions to: Keep it brief, bullet points only, always mention next steps."
+
+The agent saves your exact words and follows them every time it drafts an email. To see or change them later:
+
+```bash
+python outlook.py config show
+python outlook.py config set draft_instructions "New instructions here"
+```
+
+The agent never rewrites or rephrases your instructions — it uses them verbatim.
+
+### Humanizer for natural writing
+If you want your agent's drafts to sound less like an AI and more like you, enable the humanizer:
+
+```bash
+python outlook.py config set humanizer_enabled true
+```
+
+The agent will run a 29-pattern cleanup on every email body before saving the draft — stripping filler phrases, overused words, em dash spam, and other AI tells. If the humanizer skill isn't installed, the agent will ask if you want to install it.
+
+To turn it off: `python outlook.py config set humanizer_enabled false`
+
+### Draft review flow
+Your agent creates a draft every time by default. No accidental sends. You can review everything in Outlook's Drafts folder before it goes out.
+
 ---
 
 ## Export

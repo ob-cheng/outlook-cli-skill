@@ -19,6 +19,7 @@ outlook-cli-skill/
 │   └── structure.md      # This file
 ├── references/
 │   ├── commands.md
+│   ├── config.md
 │   ├── direct-send.md
 │   ├── features.md
 │   ├── json-schemas.md

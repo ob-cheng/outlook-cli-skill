@@ -113,6 +113,7 @@ This repo follows the [Agent Skills Spec](https://agentskills.io). When loaded b
 |---|---|
 | **[SKILL.md](SKILL.md)** | Primary instruction set — activation rules, commands, safety, workflows |
 | **[references/commands.md](references/commands.md)** | Full flag reference for every command |
+| **[references/config.md](references/config.md)** | Draft instructions, humanizer, send mode settings |
 | **[references/workflows.md](references/workflows.md)** | Common email, calendar, and task workflows |
 | **[references/features.md](references/features.md)** | Internal behavior, edge cases, export lifecycle |
 | **[references/troubleshooting.md](references/troubleshooting.md)** | Debugging when commands fail |
@@ -166,6 +167,7 @@ outlook-cli-skill/
 │   └── scripts.md        # Utility scripts
 └── references/           # Agent-facing reference (loaded on demand)
     ├── commands.md       # Full command reference
+    ├── config.md         # Draft instructions, humanizer, send mode
     ├── workflows.md      # Common workflows
     ├── features.md       # Internal edge cases & undocumented logic
     ├── troubleshooting.md

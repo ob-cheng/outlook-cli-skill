@@ -54,6 +54,7 @@ references:
   - docs/scripts.md
   - references/features.md
   - docs/structure.md
+  - references/config.md
 # Hermes-specific config (other agents use instructions in Safety Rules section)
 metadata.hermes:
   config:
@@ -103,52 +104,31 @@ Run all commands using `${OUTLOOK_CLI_PYTHON:-python}` (set only in WSL; falls b
 
 Before every send/reply/forward:
 
-1. Run `outlook.py config show` to read all settings
+1. Run `outlook.py config show` to read all settings (see [references/config.md](references/config.md))
 2. Compose the email body
 3. If `draft_instructions` is set → follow them while drafting
 4. If `humanizer_enabled` is true → load `humanizer` skill and run the pattern checklist
 5. Pass the final body to the CLI
 
-The CLI will print status tags showing what's active. If the tags don't match expectations, something was skipped.
-
-## Humanize Before Sending
-
-After composing any email body, if `humanizer_enabled` is true in config, load `humanizer` and run it through the pattern checklist. If the skill is not found, ask user whether to install from [github.com/blader/humanizer](https://github.com/blader/humanizer). If declined, proceed with the raw draft and note it wasn't humanized.
+The CLI prints status tags so skipped steps are visible in the output.
 
 ## Safety Rules
 
 **Draft-Only Mode:** The CLI defaults to draft mode. All send/reply/forward commands create drafts by default.
 
-- Default behavior: emails saved as drafts
 - Tell the user: "I've saved this as a draft. You can review and send it from Outlook."
-- To enable direct sending: `outlook.py config set send_mode send`
-- Already enabled config is printed as a status tag on every send/reply/forward
+- To enable direct sending, set config `send_mode: send` — see [references/config.md](references/config.md) for the behavior matrix
+- **`--send` is the only way to direct-send.** Without it, even with `send_mode: send`, the email saves as a draft
 
-**Behavior matrix (config):**
-
-| send_mode | `--send` passed? | Result |
-|---|---|---|
-| draft | — | ✅ Saved as draft |
-| draft | ✅ | ❌ Error: "send not allowed" |
-| send | — | ✅ **Saved as draft** |
-| send | ✅ | ✅ Sent immediately |
-
-Key rule: **`--send` is the only way to direct-send.** Without it, even with `send_mode: send`, the email is saved as a draft. No way to accidentally send.
-
-**Always confirm before:**
-
-- Deleting events/tasks/notes
-
-**Never:**
-
-- Delete without user confirmation
-- Forward potentially sensitive emails without verification
+**Always confirm before:** deleting events/tasks/notes
+**Never:** delete without confirmation, forward sensitive emails without verification
 
 > **Workflows & patterns:** See [references/workflows.md](references/workflows.md) for common email, calendar, and task workflows.
 >
 > **Utility scripts & SKILL_DIR:** See [docs/scripts.md](docs/scripts.md) for script docs and directory variable resolution.
 >
 > **Command details:** See [references/commands.md](references/commands.md) when you need all flags/options beyond the Quick Reference table.
+> **Config reference:** See [references/config.md](references/config.md) for draft instructions, humanizer, and send mode settings.
 >
 > **JSON schemas:** See [references/json-schemas.md](references/json-schemas.md) when parsing output programmatically and you need the exact schema.
 >

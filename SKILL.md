@@ -98,6 +98,19 @@ Run all commands using `${OUTLOOK_CLI_PYTHON:-python}` (set only in WSL; falls b
 | Export | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" export --output DIR [--stdout]` |
 | Folders | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" folders` |
 
+## Humanize Before Sending
+
+**After composing any email body (send, reply, forward), run it through the humanizer skill before passing it to the CLI.** This strips AI writing patterns — filler phrases, significant-talk, redundant -ing clauses, em dash spam, sycophantic tone, etc. — so the draft sounds like a real person wrote it.
+
+Load the `humanizer` skill and follow its 29-pattern checklist. Pay special attention to:
+- Filler phrases ("I hope this helps", "let me know", "great question")
+- Copula avoidance ("serves as a", "functions as a" → "is")
+- Em dash overuse and synonym cycling
+- Generic positive conclusions ("Looking forward to hearing from you" → nothing, or a specific reason)
+- Signposting and announcements ("Let's dive in", "here's what you need to know")
+
+The goal: the draft reads like something you'd actually send to a colleague, not a form letter.
+
 ## Safety Rules
 
 **Draft-Only Mode (enforced at script level):**

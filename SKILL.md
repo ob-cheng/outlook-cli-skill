@@ -123,7 +123,6 @@ After composing any email body, if `humanizer_enabled` is true in config, load `
 - Tell the user: "I've saved this as a draft. You can review and send it from Outlook."
 - To enable direct sending: `outlook.py config set send_mode send`
 - Already enabled config is printed as a status tag on every send/reply/forward
-- The `--send` flag and `OUTLOOK_CLI_ALLOW_SEND` env var still work as overrides
 
 **Behavior matrix (config):**
 

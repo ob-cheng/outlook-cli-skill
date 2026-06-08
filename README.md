@@ -93,8 +93,6 @@ python outlook.py config clear send_mode
 | `send` | — | ✅ Saved as draft |
 | `send` | ✅ | ✅ Sent immediately |
 
-The `OUTLOOK_CLI_ALLOW_SEND` env var and `--send` flag still work as overrides for backward compatibility. Config takes priority when present.
-
 ## Feature Overview
 
 - **Search** — folder, date range, sender, domain, keywords, unread filter

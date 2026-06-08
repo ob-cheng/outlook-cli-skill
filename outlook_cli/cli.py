@@ -2,35 +2,24 @@
 
 import argparse
 import json
-import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
 
 def _check_send_allowed() -> tuple[bool, str]:
-    """Check if direct sending is allowed.
-
-    Checks config file first (send_mode), then falls back to env var.
-    Config takes priority.
+    """Check if direct sending is allowed via config.
 
     Returns:
         tuple: (allowed: bool, error_message: str or None)
     """
-    # Config file takes priority
     from .core.config import ConfigManager
     cfg = ConfigManager()
-    config_mode = cfg.get('send_mode')
-    if config_mode == 'send':
-        return True, None
-
-    # Fallback: env var
-    if os.environ.get('OUTLOOK_CLI_ALLOW_SEND', '').strip() == '1':
+    if cfg.get('send_mode') == 'send':
         return True, None
     return False, (
         "Direct sending is disabled for safety. Emails are saved as drafts by default.\n"
-        "To enable direct sending, set: python outlook.py config set send_mode send\n"
-        "Or set environment variable: OUTLOOK_CLI_ALLOW_SEND=1\n"
+        "To enable direct sending, run: python outlook.py config set send_mode send\n"
         "Or remove --send flag to save as draft."
     )
 

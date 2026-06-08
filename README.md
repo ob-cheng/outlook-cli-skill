@@ -148,6 +148,11 @@ python outlook.py config set send_mode send
 python outlook.py config set draft_instructions "Keep it brief"
 python outlook.py config set humanizer_enabled true
 python outlook.py config clear humanizer_enabled
+
+# People directory
+python outlook.py people list
+python outlook.py people lookup "Alice"
+python outlook.py people add "Alice Smith" alice@co.com
 ```
 
 ## Project Structure
@@ -172,6 +177,10 @@ outlook-cli-skill/
     ├── features.md       # Internal edge cases & undocumented logic
     ├── troubleshooting.md
     └── direct-send.md    # Direct send mode
+
+~/.outlook-cli/           # User data (auto-created, not in repo)
+├── config.json
+└── people.json
 ```
 
 ## License

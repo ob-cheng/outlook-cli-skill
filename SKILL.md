@@ -112,6 +112,37 @@ Before every send/reply/forward:
 
 The CLI prints status tags so skipped steps are visible in the output.
 
+## People Directory
+
+The CLI auto-tracks every person encountered in email interactions — sender, recipients, CC — via `python outlook.py read`. Unknown people are automatically added to `~/.outlook-cli/people.json`.
+
+**After every email interaction** (any time you have an email in context — search results, read output, a composed send/reply/forward), scan the participants and run:
+
+```bash
+# Check if this person is already known
+python outlook.py people lookup "Name"
+python outlook.py people lookup email@domain.com
+
+# If not found, add them (but only for people you haven't already handled via cmd_read)
+python outlook.py people add "Full Name" email@domain.com
+```
+
+**The `read` command handles this automatically** — unknown participants are added and reported. For send/reply/forward, the agent should manually check since those involve the recipients you're sending to.
+
+Whenever the user refers to someone by name (e.g. "email Alice about the report"), look them up in the directory:
+
+```bash
+python outlook.py people lookup "Alice"
+```
+
+If found, you have their email. If not found, ask the user for the email and save it.
+
+To view all known people:
+
+```bash
+python outlook.py people list
+```
+
 ## Safety Rules
 
 **Draft-Only Mode:** The CLI defaults to draft mode. All send/reply/forward commands create drafts by default.

@@ -446,6 +446,27 @@ def create_parser() -> argparse.ArgumentParser:
         help='Config key to reset',
     )
 
+    # =========================================================================
+    # people command
+    # =========================================================================
+    people_parser = subparsers.add_parser(
+        'people',
+        help='Manage people directory (auto-tracked contacts with name+email)',
+    )
+    people_subparsers = people_parser.add_subparsers(dest='people_command', help='People commands')
+
+    # people list
+    people_list = people_subparsers.add_parser('list', help='List all known people')
+
+    # people lookup
+    people_lookup = people_subparsers.add_parser('lookup', help='Find a person by name or email')
+    people_lookup.add_argument('query', type=str, help='Name or email to search (case-insensitive)')
+
+    # people add
+    people_add = people_subparsers.add_parser('add', help='Add a person to the directory')
+    people_add.add_argument('name', type=str, help="Person's name")
+    people_add.add_argument('email', type=str, help="Person's email address")
+
     return parser
 
 
@@ -747,6 +768,25 @@ def cmd_read(args) -> int:
             print(f"  - {mid}")
         return 1
 
+    # Auto-scan: collect participants and add unknown people to directory
+    from .core.people import PeopleManager
+    pm = PeopleManager()
+    people_map = {}
+    for email in emails:
+        if email.sender_clean and email.sender_smtp and email.sender_smtp.lower() != email.to_emails[0].lower() if email.to_emails else True:
+            people_map[email.sender_clean] = email.sender_smtp
+        for name, addr in zip(email.to_names or [], email.to_emails or []):
+            if name and addr:
+                people_map[name] = addr
+        for addr in (email.cc_emails or []):
+            if addr:
+                people_map[addr.split('@')[0]] = addr
+    added = pm.extract_and_add(people_map)
+    if added:
+        print(f"\n📋 People directory updated:")
+        for entry in added:
+            print(f"   + {entry}")
+
     return 0
 
 
@@ -950,6 +990,41 @@ def cmd_config(args) -> int:
     if args.config_command == 'clear':
         cfg.clear(args.key)
         print(f"✓ {args.key} reset to default")
+        return 0
+
+    return 0
+
+
+def cmd_people(args) -> int:
+    """Handle 'people' command."""
+    from .core.people import PeopleManager
+
+    pm = PeopleManager()
+
+    if not args.people_command or args.people_command == 'list':
+        people = pm.list()
+        if not people:
+            print("People directory is empty.")
+            return 0
+        for p in people:
+            print(f"{p['name']} <{p['email']}>")
+        return 0
+
+    if args.people_command == 'lookup':
+        results = pm.lookup(args.query)
+        if not results:
+            print(f"No matches for '{args.query}'.")
+            return 0
+        for p in results:
+            print(f"{p['name']} <{p['email']}>")
+        return 0
+
+    if args.people_command == 'add':
+        added = pm.add(args.name, args.email)
+        if added:
+            print(f"✓ Added: {args.name} <{args.email}>")
+        else:
+            print(f"{args.name} <{args.email}> already exists.")
         return 0
 
     return 0
@@ -1324,6 +1399,8 @@ def main() -> int:
             return cmd_forward(args)
         elif args.command == 'config':
             return cmd_config(args)
+        elif args.command == 'people':
+            return cmd_people(args)
         elif args.command == 'cal':
             return cmd_cal(args)
         elif args.command == 'tasks':

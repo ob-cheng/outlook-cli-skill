@@ -87,16 +87,15 @@ python "${SKILL_DIR}/outlook.py" send \
 Create drafts for review before sending:
 
 ```bash
-# Create draft
+# Create draft (default behavior - no flag needed)
 python "${SKILL_DIR}/outlook.py" send \
   --to "client@company.com" \
   --subject "Proposal" \
-  --body "Here's our proposal..." \
-  --draft
+  --body "Here's our proposal..."
 
 # Review in Outlook, then send manually
-# Or create reply draft
-python "${SKILL_DIR}/outlook.py" reply <message-id> --body "Response text" --draft
+# Or create reply draft (also default)
+python "${SKILL_DIR}/outlook.py" reply <message-id> --body "Response text"
 ```
 
 ---

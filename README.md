@@ -25,17 +25,39 @@ Works via COM automation - no Azure setup, OAuth, or API keys required.
 
 ### Installation
 
-Clone or download from GitHub:
+**Option 1: Ask your agent to install it**
 
-```bash
-git clone https://github.com/ob-cheng/outlook-cli-skill.git
-```
-
-Then point your agent to the skill directory (see "For Agents" section for agent-specific instructions).
-
-Or, if your agent supports it, just ask:
+If your agent supports skill installation, just ask:
 
 > "Install the outlook-cli skill from github.com/ob-cheng/outlook-cli-skill"
+
+Your agent will clone the repo, install dependencies, and configure everything.
+
+**Option 2: Manual installation**
+
+```bash
+# Clone the repo
+git clone https://github.com/ob-cheng/outlook-cli-skill.git
+
+# For Hermes Agent — clone directly into the skills directory:
+git clone https://github.com/ob-cheng/outlook-cli-skill.git ~/.hermes/skills/outlook-cli-skill
+
+# For Claude Code — clone into your skills directory:
+git clone https://github.com/ob-cheng/outlook-cli-skill.git /path/to/.claude/skills/outlook-cli-skill
+```
+
+Then install Python dependencies:
+
+```bash
+pip install -r outlook-cli-skill/requirements.txt
+```
+
+Verify it works:
+
+```bash
+python outlook-cli-skill/outlook.py --version
+# Should output: outlook 2.0.0
+```
 
 ### Safety: Draft-Only Mode
 
@@ -47,11 +69,35 @@ The CLI **enforces draft-only mode at the script level**. No configuration neede
 
 ### Enable Direct Sending (Optional)
 
-If you want the agent to send emails directly (not just drafts), ask your agent:
+By default, all emails are saved as drafts for safety. To allow your agent to send emails directly:
+
+**Option 1: Ask your agent to enable it**
 
 > "Enable direct sending for the outlook-cli skill"
 
-The agent will configure the required environment variable for you. When enabled, the agent will still ask for your confirmation before sending each email.
+Your agent will configure the environment variable and confirm before each send.
+
+**Option 2: Manual configuration**
+
+**Hermes Agent** — add to `~/.hermes/config.yaml`:
+```yaml
+env:
+  OUTLOOK_CLI_ALLOW_SEND: "1"
+```
+
+**Claude Code** — add to `.claude/settings.json`:
+```json
+{"env": {"OUTLOOK_CLI_ALLOW_SEND": "1"}}
+```
+
+**OpenClaw** — add to `~/.openclaw/openclaw.json`:
+```json
+{"env": {"vars": {"OUTLOOK_CLI_ALLOW_SEND": "1"}}}
+```
+
+**Windows (any agent)** — set system environment variable `OUTLOOK_CLI_ALLOW_SEND=1`
+
+When enabled, the agent will still ask for your confirmation before sending each email.
 
 ### License
 
@@ -65,74 +111,7 @@ MIT
 
 ## For Agents
 
-This section contains installation, verification, and usage instructions for AI agents.
-
-### Install the Skill
-
-#### Claude Code
-
-```bash
-# Clone to your skills directory
-git clone https://github.com/ob-cheng/outlook-cli-skill.git /path/to/.claude/skills/outlook-cli-skill
-```
-
-Add to `.claude/settings.json`:
-```json
-{"skills": ["outlook-cli-skill"]}
-```
-
-#### Hermes Agent
-
-```bash
-# Clone or symlink into your skills directory
-git clone https://github.com/ob-cheng/outlook-cli-skill.git ~/.hermes/skills/outlook-cli-skill
-```
-
-The skill will be auto-discovered on next run. Or install via CLI:
-```
-hermes skills install outlook-cli-skill
-```
-
-#### OpenClaw / Others
-
-Clone the repo and point your agent's skill directory to the cloned path:
-
-```bash
-git clone https://github.com/ob-cheng/outlook-cli-skill.git
-```
-
-Then configure your agent's skill search path to include the parent directory (see your agent's documentation for details).
-
-### Verify Installation
-
-Run this command to verify the skill is installed correctly:
-
-```bash
-python "${SKILL_DIR}/outlook.py" --version
-```
-
-If this fails, check:
-
-1. Python 3.10+ is installed
-2. The skill directory path is correct
-3. Dependencies are installed: `pip install -r "${SKILL_DIR}/requirements.txt"`
-
-### Install Dependencies
-
-```bash
-pip install -r "${SKILL_DIR}/requirements.txt"
-```
-
-### Verify Outlook Connection
-
-```bash
-python "${SKILL_DIR}/outlook.py" folders --json
-```
-
-This should return a list of Outlook folders. If it fails:
-
-- Ensure Outlook desktop app is running
-- This skill requires Windows with Outlook installed (COM automation)
+This section contains usage instructions for AI agents. For installation and setup, load **[docs/install.md](docs/install.md)** — it covers cloning the repo, installing dependencies, verifying installation, and enabling direct sending for Hermes, Claude Code, OpenClaw, and other agents.
 
 ### Quick Command Reference
 
@@ -153,27 +132,18 @@ This should return a list of Outlook folders. If it fails:
 
 ### Direct Sending (When Enabled by User)
 
-By default, all email commands create drafts. If the user has enabled direct sending (by setting `OUTLOOK_CLI_ALLOW_SEND=1` env var), you can send immediately:
+By default, all email commands create drafts. If the user has enabled direct sending (see [docs/install.md](docs/install.md)), you can send immediately:
 
 ```bash
-# Send immediately (only works if env var is set)
 python "${SKILL_DIR}/outlook.py" send --to X --subject Y --body Z --send
 python "${SKILL_DIR}/outlook.py" reply <id> --body "text" --send
 python "${SKILL_DIR}/outlook.py" forward <id> --to X --send
 ```
 
 **Before using `--send`, you MUST:**
-
 1. Check if the env var is set (attempt will fail with clear error if not)
 2. Show the user a summary of what will be sent
 3. Ask for explicit confirmation before sending
-
-If user wants to enable direct sending, instruct them to configure the environment variable:
-
-- **Claude Code**: Add `{"env": {"OUTLOOK_CLI_ALLOW_SEND": "1"}}` to `.claude/settings.json`
-- **Hermes**: Add `env:\n  OUTLOOK_CLI_ALLOW_SEND: "1"` to `~/.hermes/config.yaml`
-- **OpenClaw**: Add `{env: {vars: {OUTLOOK_CLI_ALLOW_SEND: "1"}}}` to `~/.openclaw/openclaw.json`
-- **Windows**: Set system environment variable `OUTLOOK_CLI_ALLOW_SEND=1`
 
 ### Directory Variable
 
@@ -184,10 +154,11 @@ If user wants to enable direct sending, instruct them to configure the environme
 
 For detailed documentation, load these on demand:
 
-- `${SKILL_DIR}/references/commands.md` - Full command reference with all options
-- `${SKILL_DIR}/references/json-schemas.md` - JSON output formats for all commands
-- `${SKILL_DIR}/references/workflows.md` - Common workflow patterns and examples
-- `${SKILL_DIR}/references/troubleshooting.md` - Error handling and common issues
+- `${SKILL_DIR}/docs/install.md` — Installation, setup, enabling direct sending
+- `${SKILL_DIR}/references/commands.md` — Full command reference with all options
+- `${SKILL_DIR}/references/json-schemas.md` — JSON output formats for all commands
+- `${SKILL_DIR}/references/workflows.md` — Common workflow patterns and examples
+- `${SKILL_DIR}/references/troubleshooting.md` — Error handling and common issues
 
 ### Skill Structure
 
@@ -200,6 +171,8 @@ outlook-cli-skill/
 │   ├── core/
 │   ├── services/
 │   └── utils/
+├── docs/
+│   └── install.md        # Agent install & setup instructions
 ├── references/
 │   ├── commands.md
 │   ├── json-schemas.md
@@ -218,5 +191,5 @@ outlook-cli-skill/
 
 - SKILL.md: ~120 lines (loaded when triggered)
 - References: Loaded on-demand only when needed
-- Scripts: Code never enters context - only output
-- CLI code: Never enters context - runs via shell
+- Scripts: Code never enters context — only output
+- CLI code: Never enters context — runs via shell

@@ -205,12 +205,6 @@ def create_parser() -> argparse.ArgumentParser:
         help='Body is HTML format',
     )
     send_parser.add_argument(
-        '--draft',
-        action='store_true',
-        default=True,
-        help='Save as draft instead of sending (default: True)',
-    )
-    send_parser.add_argument(
         '--send',
         action='store_true',
         help='Send immediately (requires OUTLOOK_CLI_ALLOW_SEND=1 env var)',
@@ -249,12 +243,6 @@ def create_parser() -> argparse.ArgumentParser:
         '--html',
         action='store_true',
         help='Body is HTML format',
-    )
-    reply_parser.add_argument(
-        '--draft',
-        action='store_true',
-        default=True,
-        help='Save as draft instead of sending (default: True)',
     )
     reply_parser.add_argument(
         '--send',
@@ -305,12 +293,6 @@ def create_parser() -> argparse.ArgumentParser:
         '--html',
         action='store_true',
         help='Body is HTML format',
-    )
-    forward_parser.add_argument(
-        '--draft',
-        action='store_true',
-        default=True,
-        help='Save as draft instead of sending (default: True)',
     )
     forward_parser.add_argument(
         '--send',
@@ -741,7 +723,7 @@ def cmd_send(args) -> int:
     json_mode = getattr(args, 'json', False)
 
     # Determine if we should send immediately
-    # --send flag overrides --draft, but requires env var
+    # --send flag requires OUTLOOK_CLI_ALLOW_SEND env var
     send_immediately = False
     if getattr(args, 'send', False):
         allowed, error_msg = _check_send_allowed()

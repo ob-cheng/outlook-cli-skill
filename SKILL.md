@@ -44,6 +44,7 @@ metadata:
   last-updated: "2026-06-08"
 # Reference documents (on-demand loading)
 references:
+  - docs/install.md
   - references/commands.md
   - references/workflows.md
   - references/json-schemas.md
@@ -67,6 +68,8 @@ AI-friendly CLI for Microsoft Outlook. Works via COM automation - no Azure setup
 
 Always add `--json` for structured output when processing programmatically.
 
+> **Installation & setup:** See [docs/install.md](docs/install.md) for agent instructions on installing this skill and enabling direct sending.
+
 ## Quick Reference
 
 Run all commands using the skill directory path:
@@ -84,16 +87,27 @@ Run all commands using the skill directory path:
 | Export | `python "${SKILL_DIR}/outlook.py" export --output DIR [--stdout]` |
 | Folders | `python "${SKILL_DIR}/outlook.py" folders` |
 
-> **Note on multi-account setups:** Calendar (`cal`), Tasks (`tasks`), and Notes (`notes`) commands use Outlook's default account. If you have multiple accounts (e.g., iCloud + Exchange), the default may not be the one with your data. To fix this, set the desired account as default in Outlook (File → Account Settings → Data Files → Set as Default). Email `search`/`read`/`export` scan all accounts and are unaffected.
+> **Note on multi-account setups:** Calendar (`cal`), Tasks (`tasks`), and Notes (`notes`) commands use Outlook's default account (the one marked as default under File → Account Settings → Data Files). If you have multiple accounts (e.g., iCloud + Exchange), the default may not be the one with your data. To fix this, set the desired account as default in Outlook (File → Account Settings → Data Files → Set as Default). Email `search`/`read`/`export` search the **default store** (your primary mailbox). Use `--folder` to target a specific account's folder.
 
 ## Safety Rules
 
 **Draft-Only Mode (enforced at script level):**
-The CLI defaults to draft mode. All send/reply/forward commands create drafts by default.
+The CLI defaults to draft mode. All send/reply/forward commands create drafts by default — **no flag needed.**
 
-- Default behavior: emails saved as drafts (no flags needed)
+- Default behavior: emails saved as drafts
 - Tell the user: "I've saved this as a draft. You can review and send it from Outlook."
-- The `--draft` flag is implicit and always on by default
+- There is no `--draft` flag. Drafts are the default — always.
+
+**Behavior matrix:**
+
+| Env var set? | `--send` passed? | Result |
+|---|---|---|
+| — | — | ✅ Saved as draft |
+| — | ✅ | ❌ Error: "env var not set" |
+| ✅ | — | ✅ **Saved as draft** |
+| ✅ | ✅ | ✅ Sent immediately |
+
+Key rule: **`--send` is the only way to send.** Without it, even with the env var set, the email is saved as a draft. There's no way to accidentally send.
 
 **Always confirm before:**
 
@@ -194,6 +208,7 @@ python "${SKILL_DIR}/outlook.py" tasks complete <task-id>
 
 For detailed documentation, load these on demand:
 
+- `docs/install.md` - Installation, setup, and enabling direct sending
 - `references/commands.md` - Full command reference with all options
 - `references/json-schemas.md` - JSON output formats for all commands
 - `references/workflows.md` - Common workflow patterns and examples

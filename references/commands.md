@@ -40,6 +40,8 @@ Get message IDs from search results. Can read multiple emails at once.
 python outlook.py send --to ADDRESS --subject TEXT --body TEXT [options]
 ```
 
+> **Draft by default.** No flag needed — all emails are saved as drafts unless `--send` is passed.
+
 | Option | Description |
 |--------|-------------|
 | `--to ADDRESS` | Recipient (required, comma-separated for multiple) |
@@ -49,7 +51,6 @@ python outlook.py send --to ADDRESS --subject TEXT --body TEXT [options]
 | `--bcc ADDRESS` | BCC recipients (comma-separated) |
 | `--attach PATH` | File attachment (can specify multiple) |
 | `--html` | Body is HTML formatted |
-| `--draft` | Always on by default — all emails saved as drafts |
 | `--send` | Send immediately (requires OUTLOOK_CLI_ALLOW_SEND=1 env var) |
 | `--json` | Output as JSON |
 
@@ -59,13 +60,14 @@ python outlook.py send --to ADDRESS --subject TEXT --body TEXT [options]
 python outlook.py reply <message-id> --body TEXT [options]
 ```
 
+> **Draft by default.** Replies are saved as drafts unless `--send` is passed.
+
 | Option | Description |
 |--------|-------------|
 | `--body TEXT` | Reply message (required) |
 | `--all` | Reply to all recipients |
 | `--attach PATH` | Add attachment (can specify multiple) |
 | `--html` | Body is HTML |
-| `--draft` | Always on by default |
 | `--send` | Send immediately (requires env var) |
 | `--json` | Output as JSON |
 
@@ -75,6 +77,8 @@ python outlook.py reply <message-id> --body TEXT [options]
 python outlook.py forward <message-id> --to ADDRESS [options]
 ```
 
+> **Draft by default.** Forwards are saved as drafts unless `--send` is passed.
+
 | Option | Description |
 |--------|-------------|
 | `--to ADDRESS` | Forward recipient (required, comma-separated) |
@@ -83,7 +87,6 @@ python outlook.py forward <message-id> --to ADDRESS [options]
 | `--bcc ADDRESS` | BCC recipients |
 | `--attach PATH` | Additional attachment |
 | `--html` | Body is HTML |
-| `--draft` | Always on by default |
 | `--send` | Send immediately (requires env var) |
 | `--json` | Output as JSON |
 

@@ -51,7 +51,7 @@ python outlook.py send --to ADDRESS --subject TEXT --body TEXT [options]
 | `--bcc ADDRESS` | BCC recipients (comma-separated) |
 | `--attach PATH` | File attachment (can specify multiple) |
 | `--html` | Body is HTML formatted |
-| `--send` | Send immediately (requires OUTLOOK_CLI_ALLOW_SEND=1 env var) |
+| `--send` | Send immediately (requires `send_mode: send` in config) |
 | `--json` | Output as JSON |
 
 ### reply - Reply to email
@@ -68,7 +68,7 @@ python outlook.py reply <message-id> --body TEXT [options]
 | `--all` | Reply to all recipients |
 | `--attach PATH` | Add attachment (can specify multiple) |
 | `--html` | Body is HTML |
-| `--send` | Send immediately (requires env var) |
+| `--send` | Send immediately (requires `send_mode: send` in config) |
 | `--json` | Output as JSON |
 
 ### forward - Forward email
@@ -87,7 +87,7 @@ python outlook.py forward <message-id> --to ADDRESS [options]
 | `--bcc ADDRESS` | BCC recipients |
 | `--attach PATH` | Additional attachment |
 | `--html` | Body is HTML |
-| `--send` | Send immediately (requires env var) |
+| `--send` | Send immediately (requires `send_mode: send` in config) |
 | `--json` | Output as JSON |
 
 ### export - Export emails to files or stdout

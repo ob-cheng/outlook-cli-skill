@@ -208,7 +208,7 @@ def create_parser() -> argparse.ArgumentParser:
     send_parser.add_argument(
         '--send',
         action='store_true',
-        help='Send immediately (requires OUTLOOK_CLI_ALLOW_SEND=1 env var)',
+        help='Send immediately (requires send_mode: send in config)',
     )
     send_parser.add_argument('--json', action='store_true', help='Output as JSON')
 
@@ -248,7 +248,7 @@ def create_parser() -> argparse.ArgumentParser:
     reply_parser.add_argument(
         '--send',
         action='store_true',
-        help='Send immediately (requires OUTLOOK_CLI_ALLOW_SEND=1 env var)',
+        help='Send immediately (requires send_mode: send in config)',
     )
     reply_parser.add_argument('--json', action='store_true', help='Output as JSON')
 
@@ -298,7 +298,7 @@ def create_parser() -> argparse.ArgumentParser:
     forward_parser.add_argument(
         '--send',
         action='store_true',
-        help='Send immediately (requires OUTLOOK_CLI_ALLOW_SEND=1 env var)',
+        help='Send immediately (requires send_mode: send in config)',
     )
     forward_parser.add_argument('--json', action='store_true', help='Output as JSON')
 

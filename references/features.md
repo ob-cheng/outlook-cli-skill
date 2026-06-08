@@ -41,7 +41,7 @@ Uses `GetItemFromID(EntryID)`. EntryIDs can change when emails are moved — re-
 All commands create drafts. No flag needed. No `--draft` flag exists.
 
 ### Direct sending
-Requires `OUTLOOK_CLI_ALLOW_SEND=1` + `--send` flag. See [direct-send.md](direct-send.md).
+Requires `send_mode: send` in config + `--send` flag. See [direct-send.md](direct-send.md).
 
 ### Reply behavior
 - Default: reply to sender only

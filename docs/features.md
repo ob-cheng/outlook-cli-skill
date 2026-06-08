@@ -25,10 +25,10 @@ Outlook's internal message IDs (EntryIDs) can change when an email is moved betw
 ## Email Composition
 
 ### Drafts are the default
-Every email your agent creates is saved as a **draft** — always. There's no way to accidentally send. The agent has to use `--send` *and* have the environment variable set for actual sending to happen.
+Every email your agent creates is saved as a **draft** — always. There's no way to accidentally send. The agent has to use `--send` *and* have direct sending enabled in config for actual sending to happen.
 
 ### If you want direct sending
-Tell your agent: "enable direct sending for the outlook skill." They'll configure it and ask for confirmation before each send. Without it, everything stays in your Drafts folder for you to review and send manually.
+Tell your agent: "enable direct sending for the outlook skill" — they'll run `python outlook.py config set send_mode send` and ask for confirmation before each send. Without it, everything stays in your Drafts folder for you to review and send manually.
 
 ### Attachments
 Your agent can attach files to emails. Just provide the file path. Multiple attachments are supported. If a file doesn't exist, it's silently skipped rather than erroring out.

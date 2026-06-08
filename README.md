@@ -116,7 +116,7 @@ This repo follows the [Agent Skills Spec](https://agentskills.io). When loaded b
 | **[references/workflows.md](references/workflows.md)** | Common email, calendar, and task workflows |
 | **[references/features.md](references/features.md)** | Internal behavior, edge cases, export lifecycle |
 | **[references/troubleshooting.md](references/troubleshooting.md)** | Debugging when commands fail |
-| **[reference/direct-send.md](reference/direct-send.md)** | Direct send mode setup and behavior |
+| **[references/direct-send.md](references/direct-send.md)** | Direct send mode setup and behavior |
 | **[docs/install.md](docs/install.md)** | Installation across all platforms |
 | **[docs/wsl.md](docs/wsl.md)** | WSL-specific setup |
 | **[docs/structure.md](docs/structure.md)** | Directory layout and token efficiency notes |

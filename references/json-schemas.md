@@ -100,7 +100,7 @@ Returns full email with body content:
 }
 ```
 
-When sent directly (`--send` with env var enabled):
+When sent directly (`--send` with `send_mode: send` in config):
 ```json
 {
   "success": true,

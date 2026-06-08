@@ -101,31 +101,43 @@ When enabled, the agent will still ask for your confirmation before sending each
 
 ### Feature Guide
 
-For a detailed walkthrough of how search, export, incremental tracking, calendar, tasks, notes, and multi-account work under the hood, see **[docs/features.md](docs/features.md)**.
+For a detailed walkthrough of search, export, incremental tracking, calendar, tasks, notes, and multi-account, see **[docs/features.md](docs/features.md)**.
 
 ### License
 
 MIT
 
+### Contributing
+
+Issues, feature requests, and pull requests are welcome. If something doesn't work or could be better, [open an issue](https://github.com/ob-cheng/outlook-cli-skill/issues) — it helps everyone.
+
 ### Related
 
-- [Agent Skills Spec](https://agentskills.io) - The open standard this skill follows
+- [Agent Skills Spec](https://agentskills.io) — The open standard this skill follows
+
+---
+
+## Feature Guide
+
+> **👤 Humans:** [docs/features.md](docs/features.md) — Search, export, calendar, tasks, notes, and multi-account explained for non-technical readers.
+>
+> **🤖 Agents:** [references/features.md](references/features.md) — Internal behavior, edge cases, undocumented logic, and export lifecycle details.
 
 ---
 
 ## For Agents
 
-Agent-facing documentation is split into separate files under `references/` — load them on demand:
+When activated, you load **`SKILL.md`** as your primary instruction set. Pull reference files from `references/` on demand — they cover commands, troubleshooting, workflows, direct sending, and internal behaviors.
 
-- **[references/commands.md](../references/commands.md)** — Full command reference with all options
-- **[references/direct-send.md](../references/direct-send.md)** — Enabling and using `--send`
-- **[references/features.md](../references/features.md)** — Internal behavior, export lifecycle, schemas
-- **[references/json-schemas.md](../references/json-schemas.md)** — JSON output formats for all commands
-- **[references/scripts.md](../references/scripts.md)** — Utility scripts and SKILL_DIR variable resolution
-- **[references/structure.md](../references/structure.md)** — Skill directory layout and token efficiency
-- **[references/troubleshooting.md](../references/troubleshooting.md)** — Error handling and common issues
-- **[references/workflows.md](../references/workflows.md)** — Common workflow patterns and examples
-- **[references/wsl.md](../references/wsl.md)** — WSL setup guide
+`docs/` has additional agent-facing pages for installation, WSL, utility scripts, and directory layout. Load them when you need them.
 
-For installation and setup, load **[docs/install.md](docs/install.md)**.
+Quick links:
+- **[SKILL.md](SKILL.md)** — Activation instructions, commands, safety rules, workflows (load this first)
+- **[references/commands.md](references/commands.md)** — Full flag reference for every command
+- **[references/workflows.md](references/workflows.md)** — Common email, calendar, and task workflows
+- **[references/features.md](references/features.md)** — Internal behavior, edge cases, and undocumented logic
+- **[references/troubleshooting.md](references/troubleshooting.md)** — Debugging when commands fail
+- **[docs/install.md](docs/install.md)** — Installation and setup
+- **[docs/wsl.md](docs/wsl.md)** — WSL setup
+- **[docs/structure.md](docs/structure.md)** — Directory layout and token efficiency
 

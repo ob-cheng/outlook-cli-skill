@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Outlook CLI 0.1.0 - Complete command-line interface for Microsoft Outlook
+Outlook CLI 0.2.0 - Complete command-line interface for Microsoft Outlook
 
 Search, view, export, send emails and manage calendar events from your terminal.
 

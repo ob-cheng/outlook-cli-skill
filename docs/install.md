@@ -37,7 +37,7 @@ pip install -r outlook-cli-skill/requirements.txt
 
 ```bash
 python "${SKILL_DIR}/outlook.py" --version
-# Expected output: outlook 0.1.0
+# Expected: outlook 0.2.0
 ```
 
 ### 4. Verify Outlook connectivity (optional — only if user wants to test now)

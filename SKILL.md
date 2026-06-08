@@ -1,7 +1,7 @@
 ---
 name: outlook-cli
 description: Search, send, and manage Outlook emails, calendar, tasks, and notes via CLI. Requires Outlook desktop running on Windows with COM automation.
-version: 0.1.0
+version: 0.2.0
 author: ob-cheng
 license: MIT
 # Platform restriction (Hermes uses 'platforms', Claude Code uses 'compatibility')
@@ -41,7 +41,7 @@ argument-hint: "an email action like 'find unread emails' or 'send email to alic
 # Metadata
 metadata:
   author: ob-cheng
-  last-updated: "2026-06-08"
+  last-updated: "2026-06-09"
 # Reference documents (on-demand loading)
 references:
   - docs/install.md

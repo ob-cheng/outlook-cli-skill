@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)](https://github.com/ob-cheng/outlook-cli-skill)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue?style=flat-square)](https://github.com/ob-cheng/outlook-cli-skill)
 [![License](https://img.shields.io/badge/license-MIT-success?style=flat-square)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-informational?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
 [![Platform](https://img.shields.io/badge/platform-windows%20%7C%20wsl-lightgrey?style=flat-square)]()
@@ -46,7 +46,7 @@ pip install -r outlook-cli-skill/requirements.txt
 
 # Verify
 python outlook-cli-skill/outlook.py --version
-# → outlook 0.1.0
+# → outlook 0.2.0
 ```
 
 Your AI agent can do all of this for you with a single command — just ask it to install the skill.

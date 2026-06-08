@@ -1,7 +1,7 @@
 ---
 name: outlook-cli
 description: Search, send, and manage Outlook emails, calendar, tasks, and notes via CLI. Requires Outlook desktop running on Windows with COM automation.
-version: 2.0.0
+version: 0.1.0
 author: ob-cheng
 license: MIT
 # Platform restriction (Hermes uses 'platforms', Claude Code uses 'compatibility')
@@ -49,11 +49,11 @@ references:
   - references/workflows.md
   - references/json-schemas.md
   - references/troubleshooting.md
-  - references/wsl.md
+  - docs/wsl.md
   - references/direct-send.md
-  - references/scripts.md
+  - docs/scripts.md
   - references/features.md
-  - references/structure.md
+  - docs/structure.md
 # Hermes-specific config (other agents use instructions in Safety Rules section)
 metadata.hermes:
   config:
@@ -75,11 +75,11 @@ Always add `--json` for structured output when processing programmatically.
 
 > **Installation & setup:** See [docs/install.md](docs/install.md) for agent instructions on installing this skill and enabling direct sending.
 
-> **WSL / non-Windows setup:** See [references/wsl.md](references/wsl.md) for the `OUTLOOK_CLI_PYTHON` workaround.
+> **WSL / non-Windows setup:** See [docs/wsl.md](docs/wsl.md) for the `OUTLOOK_CLI_PYTHON` workaround.
 >
 > **Feature deep-dive:** See [references/features.md](references/features.md) for internal behavior, export lifecycle, content processing, multi-account handling, and undocumented logic.
 >
-> **Structure & efficiency:** See [references/structure.md](references/structure.md) for directory layout and token efficiency.
+> **Structure & efficiency:** See [docs/structure.md](docs/structure.md) for directory layout and token efficiency.
 
 ## Quick Reference
 
@@ -131,7 +131,7 @@ Key rule: **`--send` is the only way to send.** Without it, even with the env va
 
 > **Workflows & patterns:** See [references/workflows.md](references/workflows.md) for common email, calendar, and task workflows.
 >
-> **Utility scripts & SKILL_DIR:** See [references/scripts.md](references/scripts.md) for script docs and directory variable resolution.
+> **Utility scripts & SKILL_DIR:** See [docs/scripts.md](docs/scripts.md) for script docs and directory variable resolution.
 >
 > **Command details:** See [references/commands.md](references/commands.md) when you need all flags/options beyond the Quick Reference table.
 >

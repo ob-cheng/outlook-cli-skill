@@ -58,8 +58,12 @@ After installation, before drafting the first email, ask the user:
 
 > **"Do you want to set custom drafting instructions? (e.g. 'Keep it brief', 'Always mention next steps')"**
 
-- If yes → run: `outlook.py config set draft_instructions "<their rules>"`
 - If no → skip (instructions are empty by default)
+- If yes → ask the user to provide their instructions, then save them **exactly as given — verbatim, no rewording, no interpretation**:
+
+  ```
+  outlook.py config set draft_instructions "<exact text the user provided>"
+  ```
 
 > **"Do you want to enable humanizer processing for email drafts?"**
 

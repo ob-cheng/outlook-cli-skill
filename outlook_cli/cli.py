@@ -26,7 +26,6 @@ from . import __version__
 from .core.connection import connect_to_outlook
 from .services.search import SearchService
 from .services.viewer import ViewerService
-from .services.export import ExportService
 from .services.compose import ComposeService
 from .services.calendar import CalendarService
 from .utils.formatting import parse_date
@@ -131,12 +130,19 @@ def create_parser() -> argparse.ArgumentParser:
         action='store_true',
         help='For JSON format: combine all emails into a single file (more token-efficient)',
     )
-    export_parser.add_argument(
+    # --stdout and --json are mutually exclusive: --stdout outputs email data,
+    # --json outputs an export summary. Using both is ambiguous.
+    export_output_group = export_parser.add_mutually_exclusive_group()
+    export_output_group.add_argument(
         '--stdout',
         action='store_true',
-        help='Output JSON to terminal instead of files (for agent/pipeline use)',
+        help='Output email data JSON to terminal instead of files (for agent/pipeline use)',
     )
-    export_parser.add_argument('--json', action='store_true', help='Output as JSON')
+    export_output_group.add_argument(
+        '--json',
+        action='store_true',
+        help='Output export summary as JSON (file count, status, etc.)',
+    )
 
     # =========================================================================
     # read command
@@ -569,6 +575,7 @@ def cmd_search(args) -> int:
 
     # Export if requested
     if args.export:
+        from .services.export import ExportService
         print(f"\nExporting to {args.export}...")
         exporter = ExportService(args.export)
         result = exporter.export_emails(emails)
@@ -591,6 +598,7 @@ def cmd_export(args) -> int:
     _, namespace = connect_to_outlook()
 
     # For incremental mode, check last run and override since_date
+    from .services.export import ExportService
     exporter = ExportService(args.output) if not stdout_mode else None
     since_date, until_date = _get_date_range(args)
 

@@ -84,6 +84,8 @@ Run all commands using the skill directory path:
 | Export | `python "${SKILL_DIR}/outlook.py" export --output DIR [--stdout]` |
 | Folders | `python "${SKILL_DIR}/outlook.py" folders` |
 
+> **Note on multi-account setups:** Calendar (`cal`), Tasks (`tasks`), and Notes (`notes`) commands use Outlook's default account. If you have multiple accounts (e.g., iCloud + Exchange), the default may not be the one with your data. To fix this, set the desired account as default in Outlook (File → Account Settings → Data Files → Set as Default). Email `search`/`read`/`export` scan all accounts and are unaffected.
+
 ## Safety Rules
 
 **Draft-Only Mode (enforced at script level):**
@@ -156,7 +158,7 @@ User wants to...
 ├── Schedule meeting ─────> cal create --subject --start --end [--required]
 ├── Manage tasks ─────────> tasks list/create/complete/delete
 ├── Take notes ───────────> notes list/create/read/delete
-├── Export for AI ────────> export --output . --stdout --json
+├── Export for AI ────────> export --output . --stdout
 └── Export to files ──────> export --output DIR [--format json/markdown]
 ```
 

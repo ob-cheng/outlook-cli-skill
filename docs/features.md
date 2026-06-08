@@ -101,7 +101,7 @@ The result is clean, readable content — no formatting debris.
 ## Calendar
 
 ### Which calendar gets used
-Calendar commands use Outlook's **default account** (set under File → Account Settings → Data Files). If you have multiple accounts (iCloud + Exchange, for example) and your calendar data is on a non-default account, you'll need to set the right one as default.
+Calendar commands search **all stores** accessible in Outlook. If you have multiple accounts (iCloud + Exchange, for example), all their calendars are searched — no configuration needed. The same applies to Tasks and Notes. Email search defaults to the primary store but accepts path-based folder targeting (e.g., `--folder "AccountName/Inbox"`) to reach any account.
 
 ### Creating events
 Your agent can create meetings with attendees, locations, and descriptions. Invitations are sent automatically when attendees are included. Reminders default to 15 minutes.
@@ -130,7 +130,7 @@ If you have multiple email accounts set up in Outlook:
 
 | What you're doing | Which account gets used |
 |---|---|
-| Searching/reading emails | Primary mailbox. Use `--folder "AccountName\Inbox"` to target another. |
-| Calendar, Tasks, Notes | Default account (File → Account Settings → Data Files) |
+| Searching/reading emails | Primary mailbox by default. Use `--folder "AccountName/Inbox"` to target another. |
+| Calendar, Tasks, Notes | **All accounts.** Every store is searched — no switching needed. |
 
-To switch which account your calendar uses: File → Account Settings → Data Files → select the right account → Set as Default → restart Outlook.
+Email is the only command that doesn't auto-search across stores. Calendar, Tasks, and Notes search every store you have configured.

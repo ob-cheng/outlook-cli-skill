@@ -267,3 +267,38 @@ python outlook.py notes create --body TEXT [options]
 ```bash
 python outlook.py notes delete <note-id> [--json]
 ```
+
+---
+
+## People Commands
+
+### people list - List directory
+
+```bash
+python outlook.py people list [--json]
+```
+
+| Option | Description |
+|--------|-------------|
+| `--json` | Output as JSON |
+
+### people lookup - Find person
+
+```bash
+python outlook.py people lookup <name-or-email>
+```
+
+### people add - Add to directory
+
+```bash
+python outlook.py people add "Full Name" email@domain.com
+```
+
+---
+
+## Multi-Account Behavior
+
+| Command | Scope |
+|---------|-------|
+| `search`, `export`, `read` | Default account (use `--folder "Account/Inbox"` to target another) |
+| `cal`, `tasks`, `notes` | All accounts — every configured store is searched automatically |

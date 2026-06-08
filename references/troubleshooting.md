@@ -126,13 +126,12 @@ python "${SKILL_DIR}/outlook.py" export --output ./exports \
 
 ### "No events found" or empty results
 
-**Cause:** Calendar commands use Outlook's default account. In multi-account setups (iCloud + Exchange + Outlook.com), the default may not be the one with your calendar data.
+**Cause:** Date range may be too narrow, or calendar data is sparse. Calendar commands search all stores by default — multi-account is handled automatically.
 
-**Solution:** Set the desired account as default in Outlook:
-1. File → Account Settings → Data Files
-2. Select the account with your calendar/tasks/notes
-3. Click "Set as Default"
-4. Restart Outlook
+If you're still seeing no results, widen the date range:
+```bash
+python "${SKILL_DIR}/outlook.py" cal list --start 2026-01-01 --end 2026-12-31 --json
+```
 
 ### Event not created
 

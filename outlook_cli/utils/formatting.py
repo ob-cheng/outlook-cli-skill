@@ -89,14 +89,20 @@ def extract_recipients(recipients_obj) -> tuple[str, list[str], list[str]]:
             recip = recipients_obj.Item(i)
             name = recip.Name
             email = get_smtp_address(recip)
-            if name:
-                clean_name = extract_display_name(name)
-                if clean_name:
-                    names.append(clean_name)
-            if email:
+            if name and email:
                 smtp_email = extract_email_address(email)
                 if smtp_email:
-                    emails.append(smtp_email)
+                    clean_name = extract_display_name(name)
+                    if clean_name:
+                        names.append(clean_name)
+                        emails.append(smtp_email)
+                    else:
+                        # Has email but unparseable name — use email local-part as name
+                        names.append(smtp_email.split('@')[0])
+                        emails.append(smtp_email)
+                else:
+                    # Has name but unparseable email — skip this entry
+                    pass
             if name and email:
                 recipients.append(f"{name} <{email}>")
             elif email:

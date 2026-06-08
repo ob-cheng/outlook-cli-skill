@@ -192,7 +192,10 @@ class CalendarService:
     def __init__(self, namespace):
         """Initialize with Outlook MAPI namespace."""
         self.namespace = namespace
-        self.calendar = namespace.GetDefaultFolder(9)  # 9 = olFolderCalendar
+        from ..core.folders import find_folder_across_stores
+        self.calendar = find_folder_across_stores(namespace, "Calendar")
+        if self.calendar is None:
+            self.calendar = namespace.GetDefaultFolder(9)  # fallback: 9 = olFolderCalendar
 
     def list_events(
         self,

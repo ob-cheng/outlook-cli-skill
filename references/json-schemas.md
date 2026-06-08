@@ -428,3 +428,68 @@ Same schema but single task wrapped in `task`:
   "message": "Note deleted successfully"
 }
 ```
+
+---
+
+## People Schemas
+
+### people list --json
+
+```json
+{
+  "success": true,
+  "count": 28,
+  "people": [
+    {
+      "name": "Alice Smith",
+      "email": "alice@company.com"
+    }
+  ]
+}
+```
+
+### people lookup
+
+```text
+Alice Smith <alice@company.com>
+```
+
+No `--json` flag for lookup or add — plain text only.
+
+### people add
+
+```text
+✓ Added: Alice Smith <alice@company.com>
+```
+
+---
+
+## Changed in v0.2.0
+
+### read --json now includes people_added
+
+```json
+{
+  "success": true,
+  "count": 1,
+  "emails": [...],
+  "not_found": null,
+  "people_added": ["Alice Smith <alice@company.com>"]
+}
+```
+
+The `people_added` field lists any new people who were auto-added to the people directory during the read. `null` if no new people were discovered.
+
+### search --json with --export
+
+When `--export` is used with `--json`, the response includes export metadata:
+
+```json
+{
+  "success": true,
+  "count": 5,
+  "emails": [...],
+  "export_files_created": 5,
+  "export_directory": "/tmp/exports"
+}
+```

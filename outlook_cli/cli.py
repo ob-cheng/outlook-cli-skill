@@ -457,6 +457,10 @@ def create_parser() -> argparse.ArgumentParser:
 
     # people list
     people_list = people_subparsers.add_parser('list', help='List all known people')
+    people_list.add_argument(
+        '--json', action='store_true',
+        help='Output as JSON',
+    )
 
     # people lookup
     people_lookup = people_subparsers.add_parser('lookup', help='Find a person by name or email')
@@ -594,10 +598,21 @@ def cmd_search(args) -> int:
     )
 
     if json_mode:
-        _output_json(_json_success({
+        # Run export first if requested (before early return)
+        export_result = None
+        if getattr(args, 'export', None):
+            from .services.export import ExportService
+            exporter = ExportService(args.export)
+            export_result = exporter.export_emails(emails)
+
+        result = _json_success({
             "count": len(emails),
             "emails": [e.to_dict(include_body=False) for e in emails],
-        }))
+        })
+        if export_result:
+            result["export_files_created"] = export_result['files_created']
+            result["export_directory"] = args.export
+        _output_json(result)
         return 0
 
     print(f"\nFound {len(emails)} email(s)")
@@ -745,15 +760,32 @@ def cmd_read(args) -> int:
         else:
             not_found.append(message_id)
 
+    # Auto-scan: collect participants and add unknown people to directory
+    # Run BEFORE output so JSON mode doesn't skip it
+    from .core.people import PeopleManager
+    pm = PeopleManager()
+    people_map = {}
+    for email in emails:
+        # Always add sender (extract_and_add handles dedup)
+        if email.sender_clean and email.sender_smtp:
+            people_map[email.sender_clean] = email.sender_smtp
+        # Add TO/CC recipients — names and emails are guaranteed in sync
+        for name, addr in zip(email.to_names or [], email.to_emails or []):
+            if name and addr:
+                people_map[name] = addr
+    added = pm.extract_and_add(people_map)
+
     if json_mode:
         if not_found and not emails:
             _output_json(_json_error(f"Messages not found: {', '.join(not_found)}", "not_found"))
             return 1
-        _output_json(_json_success({
+        result = _json_success({
             "count": len(emails),
             "emails": [e.to_dict(include_body=True) for e in emails],
             "not_found": not_found if not_found else None,
-        }))
+            "people_added": added if added else None,
+        })
+        _output_json(result)
         return 0 if not not_found else 1
 
     viewer = ViewerService()
@@ -768,20 +800,6 @@ def cmd_read(args) -> int:
             print(f"  - {mid}")
         return 1
 
-    # Auto-scan: collect participants and add unknown people to directory
-    from .core.people import PeopleManager
-    pm = PeopleManager()
-    people_map = {}
-    for email in emails:
-        if email.sender_clean and email.sender_smtp and email.sender_smtp.lower() != email.to_emails[0].lower() if email.to_emails else True:
-            people_map[email.sender_clean] = email.sender_smtp
-        for name, addr in zip(email.to_names or [], email.to_emails or []):
-            if name and addr:
-                people_map[name] = addr
-        for addr in (email.cc_emails or []):
-            if addr:
-                people_map[addr.split('@')[0]] = addr
-    added = pm.extract_and_add(people_map)
     if added:
         print(f"\n📋 People directory updated:")
         for entry in added:
@@ -1003,6 +1021,12 @@ def cmd_people(args) -> int:
 
     if not args.people_command or args.people_command == 'list':
         people = pm.list()
+        if getattr(args, 'json', False):
+            _output_json(_json_success({
+                "count": len(people),
+                "people": people,
+            }))
+            return 0
         if not people:
             print("People directory is empty.")
             return 0

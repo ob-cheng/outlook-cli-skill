@@ -106,6 +106,61 @@ def find_folder_by_name(namespace, folder_name):
     return None
 
 
+def find_folder_across_stores(namespace, folder_name: str):
+    """Find a folder by name across ALL stores, skipping the GetDefaultFolder shortcut.
+
+    Unlike find_folder_by_name, this always searches every store recursively instead of
+    falling back to GetDefaultFolder() for well-known folder names. Needed for multi-account
+    setups where calendar/tasks/notes data lives in a non-default store.
+
+    Args:
+        namespace: Outlook MAPI namespace
+        folder_name: Folder name to find (case-insensitive)
+
+    Returns:
+        Folder object from the first matching store, or None
+    """
+    target = folder_name.lower().strip()
+
+    def recursive_search(folder_collection):
+        for i in range(1, folder_collection.Count + 1):
+            try:
+                folder = folder_collection.Item(i)
+                if folder.Name.lower() == target:
+                    return folder
+                if folder.Folders.Count > 0:
+                    result = recursive_search(folder.Folders)
+                    if result:
+                        return result
+            except Exception:
+                continue
+        return None
+
+    for i in range(1, namespace.Folders.Count + 1):
+        try:
+            store = namespace.Folders.Item(i)
+            if store.Name.lower() == target:
+                return store
+            result = recursive_search(store.Folders)
+            if result:
+                return result
+        except Exception:
+            continue
+
+    # Fallback to GetDefaultFolder if nothing found across stores
+    default_map = {
+        'calendar': 9, 'tasks': 13, 'notes': 12,
+        'inbox': 6, 'sent items': 5, 'drafts': 16,
+        'deleted items': 3, 'junk email': 23, 'contacts': 10,
+    }
+    if target in default_map:
+        try:
+            return namespace.GetDefaultFolder(default_map[target])
+        except Exception:
+            pass
+    return None
+
+
 def find_folder_by_path(namespace, folder_path):
     """Find a folder by full path (e.g., 'Account/Inbox/Subfolder').
 

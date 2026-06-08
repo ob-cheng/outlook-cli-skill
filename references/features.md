@@ -99,8 +99,8 @@ State file at `${SKILL_DIR}/extraction_state.json` (not in output dir).
 
 ## Calendar
 
-### Default account
-Uses Outlook's default account (File → Account Settings → Data Files). Multi-account setups may need to change default.
+### Account scope
+Calendar, Tasks, and Notes search **all stores** accessible in Outlook — no configuration needed. Email search defaults to the primary store but accepts path-based folder targeting (e.g., `--folder "AccountName/Inbox"`) to reach any account.
 
 ### Event creation
 - Required: `--subject`, `--start`, `--end` (YYYY-MM-DD HH:MM)
@@ -138,5 +138,5 @@ Sets status to `completed` and percent complete to 100.
 
 | Command | Store |
 |---------|-------|
-| Email search/read/export | Default store (use `--folder` to target specific account) |
-| Calendar, Tasks, Notes | Default account |
+| Email search/read/export | Default store (use `--folder "Account/Inbox"` to target a specific account) |
+| Calendar, Tasks, Notes | **All stores** — every configured account is searched automatically |

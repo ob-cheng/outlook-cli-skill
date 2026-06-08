@@ -1,7 +1,7 @@
 ---
 name: outlook-cli
 description: Search, send, and manage Outlook emails, calendar, tasks, and notes via CLI. Requires Outlook desktop running on Windows with COM automation.
-version: 0.2.0
+version: 0.2.1
 author: ob-cheng
 license: MIT
 # Platform restriction (Hermes uses 'platforms', Claude Code uses 'compatibility')
@@ -98,6 +98,7 @@ Run all commands using `${OUTLOOK_CLI_PYTHON:-python}` (set only in WSL; falls b
 | Notes | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" notes list/read/create/delete` |
 | Export | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" export --output DIR [--stdout]` |
 | Folders | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" folders` |
+| People | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" people list/lookup/add` |
 | Config | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" config show/set/clear` |
 
 ## Draft Workflow
@@ -140,7 +141,7 @@ If found, you have their email. If not found, ask the user for the email and sav
 To view all known people:
 
 ```bash
-python outlook.py people list
+python outlook.py people list [--json]
 ```
 
 ## Safety Rules

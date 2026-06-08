@@ -140,7 +140,10 @@ class TaskService:
     def __init__(self, namespace):
         """Initialize with Outlook MAPI namespace."""
         self.namespace = namespace
-        self.tasks_folder = namespace.GetDefaultFolder(13)  # 13 = olFolderTasks
+        from ..core.folders import find_folder_across_stores
+        self.tasks_folder = find_folder_across_stores(namespace, "Tasks")
+        if self.tasks_folder is None:
+            self.tasks_folder = namespace.GetDefaultFolder(13)  # fallback: 13 = olFolderTasks
 
     def list_tasks(
         self,

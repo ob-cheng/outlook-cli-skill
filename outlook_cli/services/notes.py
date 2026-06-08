@@ -99,7 +99,10 @@ class NotesService:
     def __init__(self, namespace):
         """Initialize with Outlook MAPI namespace."""
         self.namespace = namespace
-        self.notes_folder = namespace.GetDefaultFolder(12)  # 12 = olFolderNotes
+        from ..core.folders import find_folder_across_stores
+        self.notes_folder = find_folder_across_stores(namespace, "Notes")
+        if self.notes_folder is None:
+            self.notes_folder = namespace.GetDefaultFolder(12)  # fallback: 12 = olFolderNotes
 
     def list_notes(
         self,

@@ -25,11 +25,17 @@ Works via COM automation - no Azure setup, OAuth, or API keys required.
 
 ### Installation
 
-Just ask your agent:
+Clone or download from GitHub:
 
-> "Install the outlook-cli skill"
+```bash
+git clone https://github.com/ob-cheng/outlook-cli-skill.git
+```
 
-Or copy manually to your agent's skill directory (see "For Agents" section below for paths).
+Then point your agent to the skill directory (see "For Agents" section for agent-specific instructions).
+
+Or, if your agent supports it, just ask:
+
+> "Install the outlook-cli skill from github.com/ob-cheng/outlook-cli-skill"
 
 ### Safety: Draft-Only Mode
 
@@ -59,7 +65,43 @@ MIT
 
 ## For Agents
 
-This section contains installation verification and setup instructions for AI agents.
+This section contains installation, verification, and usage instructions for AI agents.
+
+### Install the Skill
+
+#### Claude Code
+
+```bash
+# Clone to your skills directory
+git clone https://github.com/ob-cheng/outlook-cli-skill.git /path/to/.claude/skills/outlook-cli-skill
+```
+
+Add to `.claude/settings.json`:
+```json
+{"skills": ["outlook-cli-skill"]}
+```
+
+#### Hermes Agent
+
+```bash
+# Clone or symlink into your skills directory
+git clone https://github.com/ob-cheng/outlook-cli-skill.git ~/.hermes/skills/outlook-cli-skill
+```
+
+The skill will be auto-discovered on next run. Or install via CLI:
+```
+hermes skills install outlook-cli-skill
+```
+
+#### OpenClaw / Others
+
+Clone the repo and point your agent's skill directory to the cloned path:
+
+```bash
+git clone https://github.com/ob-cheng/outlook-cli-skill.git
+```
+
+Then configure your agent's skill search path to include the parent directory (see your agent's documentation for details).
 
 ### Verify Installation
 

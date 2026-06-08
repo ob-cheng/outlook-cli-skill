@@ -53,6 +53,7 @@ references:
   - references/direct-send.md
   - references/scripts.md
   - references/features.md
+  - references/structure.md
 # Hermes-specific config (other agents use instructions in Safety Rules section)
 metadata.hermes:
   config:
@@ -77,6 +78,8 @@ Always add `--json` for structured output when processing programmatically.
 > **WSL / non-Windows setup:** See [references/wsl.md](references/wsl.md) for the `OUTLOOK_CLI_PYTHON` workaround.
 >
 > **Feature deep-dive:** See [references/features.md](references/features.md) for internal behavior, export lifecycle, content processing, multi-account handling, and undocumented logic.
+>
+> **Structure & efficiency:** See [references/structure.md](references/structure.md) for directory layout and token efficiency.
 
 ## Quick Reference
 

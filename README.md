@@ -124,6 +124,7 @@ python outlook.py note create --subject "Ideas"
 
 ```
 outlook-cli-skill/
+├── LICENSE               # MIT
 ├── SKILL.md              # Agent activation instructions
 ├── outlook.py            # Entry point
 ├── requirements.txt      # Python dependencies
@@ -144,7 +145,7 @@ outlook-cli-skill/
 
 ## License
 
-MIT — do what you want with it.
+MIT — do what you want with it. See [LICENSE](LICENSE) for the legalese.
 
 ## Contributing
 

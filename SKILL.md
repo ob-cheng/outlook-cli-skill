@@ -99,22 +99,6 @@ Run all commands using `${OUTLOOK_CLI_PYTHON:-python}` (set only in WSL; falls b
 | Folders | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" folders` |
 | Config | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" config show/set/clear` |
 
-## First-Time Setup
-
-On first activation (or when sending the first email), ask the user:
-
-> "Do you want to set custom drafting instructions? (e.g. 'Keep it brief', 'Always mention next steps')"
-
-- If yes → run `outlook.py config set draft_instructions "<their rules>"`
-- If no → skip (instructions are empty by default)
-
-> "Do you want to enable humanizer processing for email drafts?"
-
-- If yes → run `outlook.py config set humanizer_enabled true`
-- If no → skip (disabled by default)
-
-These settings are read by the CLI on every send/reply/forward and printed as status tags so the workflow is visible.
-
 ## Draft Workflow
 
 Before every send/reply/forward:

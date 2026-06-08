@@ -1,6 +1,6 @@
 # Installation & Setup
 
-Instructions for AI agents. When the user asks to install this skill or enable direct sending, follow these steps.
+Instructions for AI agents. When the user asks to install this skill, follow these steps.
 
 ## Installing the Skill
 
@@ -37,7 +37,7 @@ pip install -r outlook-cli-skill/requirements.txt
 
 ```bash
 python "${SKILL_DIR}/outlook.py" --version
-# Expected output: outlook 2.0.0
+# Expected output: outlook 0.1.0
 ```
 
 ### 4. Verify Outlook connectivity (optional — only if user wants to test now)
@@ -52,40 +52,58 @@ This requires Outlook desktop to be running on Windows. If it fails, the skill i
 
 ---
 
-## Enabling Direct Sending
+## First-Time Setup (Ask the User)
 
-By default, all emails are saved as drafts for safety. To allow direct sending, set the environment variable `OUTLOOK_CLI_ALLOW_SEND=1`.
+After installation, before drafting the first email, ask the user:
 
-### Agent-specific configuration
+> **"Do you want to set custom drafting instructions? (e.g. 'Keep it brief', 'Always mention next steps')"**
 
-**Hermes Agent** — add to `~/.hermes/config.yaml`:
+- If yes → run: `outlook.py config set draft_instructions "<their rules>"`
+- If no → skip (instructions are empty by default)
 
-```yaml
-env:
-  OUTLOOK_CLI_ALLOW_SEND: "1"
+> **"Do you want to enable humanizer processing for email drafts?"**
+
+- If yes → run: `outlook.py config set humanizer_enabled true`
+- If no → skip (disabled by default)
+
+> **"Do you want to allow direct sending instead of draft-only mode?"**
+
+- If yes → run: `outlook.py config set send_mode send`
+  Then explain: *"I'll still ask for confirmation before sending each email."*
+- If no → skip (draft mode is default)
+
+These settings are stored in `~/.outlook-cli/config.json` and printed as status tags on every send/reply/forward so the workflow is visible.
+
+---
+
+## Configuration Reference
+
+All settings managed via the CLI:
+
+```bash
+# View current settings
+python outlook.py config show
+
+# Enable direct sending
+python outlook.py config set send_mode send
+
+# Set custom drafting instructions
+python outlook.py config set draft_instructions "Keep it under 3 sentences"
+
+# Enable humanizer processing
+python outlook.py config set humanizer_enabled true
+
+# Reset to default
+python outlook.py config clear send_mode
 ```
 
-**Claude Code** — add to `.claude/settings.json`:
+| Key | Default | Description |
+|---|---|---|
+| `send_mode` | `draft` | `draft` or `send` — allows `--send` flag |
+| `draft_instructions` | `""` | Free-text instructions for the agent when drafting |
+| `humanizer_enabled` | `false` | Run humanizer skill on email bodies |
 
-```json
-{"env": {"OUTLOOK_CLI_ALLOW_SEND": "1"}}
-```
-
-**OpenClaw** — add to `~/.openclaw/openclaw.json`:
-
-```json
-{"env": {"vars": {"OUTLOOK_CLI_ALLOW_SEND": "1"}}}
-```
-
-**Windows (any agent)** — set system environment variable `OUTLOOK_CLI_ALLOW_SEND=1`
-
-### Post-configuration
-
-After configuring, tell the user:
-
-> "Direct sending is now enabled. I'll still ask for your confirmation before sending each email."
-
-The agent must still confirm with the user before using `--send`. If the env var is not set, the `--send` flag will fail with a clear error message.
+When `send_mode: send` is set and `--send` is used, the user must still confirm first.
 
 ---
 

@@ -100,7 +100,9 @@ Run all commands using `${OUTLOOK_CLI_PYTHON:-python}` (set only in WSL; falls b
 
 ## Humanize Before Sending
 
-**After composing any email body (send, reply, forward), run it through the humanizer skill before passing it to the CLI.** This strips AI writing patterns — filler phrases, significant-talk, redundant -ing clauses, em dash spam, sycophantic tone, etc. — so the draft sounds like a real person wrote it.
+**After composing any email body (send, reply, forward), load the `humanizer` skill and run it through the pattern checklist before passing it to the CLI.** This strips AI writing patterns — filler phrases, significant-talk, redundant -ing clauses, em dash spam, sycophantic tone, etc. — so the draft sounds like a real person wrote it.
+
+If the `humanizer` skill is not found (e.g. not installed in the agent's skill directory), ask the user whether they want to install it. If they decline, proceed with the raw draft and note that it wasn't humanized.
 
 Load the `humanizer` skill and follow its 29-pattern checklist. Pay special attention to:
 - Filler phrases ("I hope this helps", "let me know", "great question")

@@ -115,95 +115,17 @@ MIT
 
 ## For Agents
 
-This section contains usage instructions for AI agents. For installation and setup, load **[docs/install.md](docs/install.md)** — it covers cloning the repo, installing dependencies, verifying installation, and enabling direct sending for Hermes, Claude Code, OpenClaw, and other agents.
+Agent-facing documentation is split into separate files under `references/` — load them on demand:
 
-### Quick Command Reference
+- **[references/commands.md](../references/commands.md)** — Full command reference with all options
+- **[references/direct-send.md](../references/direct-send.md)** — Enabling and using `--send`
+- **[references/features.md](../references/features.md)** — Internal behavior, export lifecycle, schemas
+- **[references/json-schemas.md](../references/json-schemas.md)** — JSON output formats for all commands
+- **[references/scripts.md](../references/scripts.md)** — Utility scripts and SKILL_DIR variable resolution
+- **[references/structure.md](../references/structure.md)** — Skill directory layout and token efficiency
+- **[references/troubleshooting.md](../references/troubleshooting.md)** — Error handling and common issues
+- **[references/workflows.md](../references/workflows.md)** — Common workflow patterns and examples
+- **[references/wsl.md](../references/wsl.md)** — WSL setup guide
 
-| Intent | Command |
-| ------ | ------- |
-| Find emails | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" search [options] --json` |
-| Read email | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" read <id> --json` |
-| Send email | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" send --to X --subject Y --body Z` |
-| Reply | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" reply <id> --body "text"` |
-| Forward | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" forward <id> --to X` |
-| Calendar | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" cal list/read/create/delete --json` |
-| Tasks | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" tasks list/read/create/complete/delete --json` |
-| Notes | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" notes list/read/create/delete --json` |
-| Export | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" export --output DIR [--stdout]` |
-| Folders | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" folders --json` |
+For installation and setup, load **[docs/install.md](docs/install.md)**.
 
-**Note:** All send/reply/forward commands create drafts by default.
-
-### Direct Sending (When Enabled by User)
-
-By default, all email commands create drafts. If the user has enabled direct sending (see [docs/install.md](docs/install.md)), you can send immediately:
-
-```bash
-${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" send --to X --subject Y --body Z --send
-${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" reply <id> --body "text" --send
-${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" forward <id> --to X --send
-```
-
-**Before using `--send`, you MUST:**
-1. Check if the env var is set (attempt will fail with clear error if not)
-2. Show the user a summary of what will be sent
-3. Ask for explicit confirmation before sending
-
-### Directory Variable
-
-- **Claude Code**: `${CLAUDE_SKILL_DIR}` (aliased to `${SKILL_DIR}`)
-- **Hermes/OpenClaw/Others**: `${SKILL_DIR}`
-
-### Reference Files
-
-For detailed documentation, load these on demand:
-
-- `${SKILL_DIR}/docs/install.md` — Installation, setup, enabling direct sending
-- `${SKILL_DIR}/docs/features.md` — Human-readable feature guide
-- `${SKILL_DIR}/references/features.md` — Agent-facing feature deep-dive (internal behavior, lifecycle, schemas)
-- `${SKILL_DIR}/references/commands.md` — Full command reference with all options
-- `${SKILL_DIR}/references/direct-send.md` — Enabling and using `--send` per agent
-- `${SKILL_DIR}/references/json-schemas.md` — JSON output formats for all commands
-- `${SKILL_DIR}/references/scripts.md` — Utility scripts and SKILL_DIR variable resolution
-- `${SKILL_DIR}/references/workflows.md` — Common workflow patterns and examples
-- `${SKILL_DIR}/references/troubleshooting.md` — Error handling and common issues
-- `${SKILL_DIR}/references/wsl.md` — WSL setup guide
-
-### Skill Structure
-
-```text
-outlook-cli-skill/
-├── SKILL.md              # Entry point - triggers & core instructions
-├── outlook.py            # CLI entry point
-├── outlook_cli/          # CLI implementation
-│   ├── cli.py
-│   ├── core/
-│   ├── services/
-│   └── utils/
-├── docs/
-│   ├── install.md        # Agent install & setup instructions
-│   └── features.md       # Human-facing feature guide
-├── references/
-│   ├── commands.md
-│   ├── direct-send.md
-│   ├── features.md
-│   ├── json-schemas.md
-│   ├── scripts.md
-│   ├── troubleshooting.md
-│   ├── workflows.md
-│   └── wsl.md
-├── scripts/
-│   ├── validate-export.py
-│   └── format-email.py
-├── assets/
-│   └── email-template.md
-├── requirements.txt
-└── README.md
-```
-
-### Token Efficiency
-
-- SKILL.md: ~140 lines (loaded when triggered)
-- References: Loaded on-demand only when needed
-- Scripts: Code never enters context — only output
-- CLI code: Never enters context — runs via shell

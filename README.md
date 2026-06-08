@@ -19,8 +19,8 @@ Works via COM automation - no Azure setup, OAuth, or API keys required.
 
 ### Requirements
 
-- Windows with Outlook desktop app installed
-- Python 3.10+
+- Windows with Outlook desktop app installed (or WSL with Windows Python)
+- Python 3.10+ (Windows Python if running from WSL)
 - Outlook running when using the skill
 
 ### Installation
@@ -99,6 +99,10 @@ env:
 
 When enabled, the agent will still ask for your confirmation before sending each email.
 
+### Feature Guide
+
+For a detailed walkthrough of how search, export, incremental tracking, calendar, tasks, notes, and multi-account work under the hood, see **[docs/features.md](docs/features.md)**.
+
 ### License
 
 MIT
@@ -117,16 +121,16 @@ This section contains usage instructions for AI agents. For installation and set
 
 | Intent | Command |
 | ------ | ------- |
-| Find emails | `python "${SKILL_DIR}/outlook.py" search [options] --json` |
-| Read email | `python "${SKILL_DIR}/outlook.py" read <id> --json` |
-| Send email | `python "${SKILL_DIR}/outlook.py" send --to X --subject Y --body Z` |
-| Reply | `python "${SKILL_DIR}/outlook.py" reply <id> --body "text"` |
-| Forward | `python "${SKILL_DIR}/outlook.py" forward <id> --to X` |
-| Calendar | `python "${SKILL_DIR}/outlook.py" cal list/read/create/delete --json` |
-| Tasks | `python "${SKILL_DIR}/outlook.py" tasks list/read/create/complete/delete --json` |
-| Notes | `python "${SKILL_DIR}/outlook.py" notes list/read/create/delete --json` |
-| Export | `python "${SKILL_DIR}/outlook.py" export --output DIR [--stdout]` |
-| Folders | `python "${SKILL_DIR}/outlook.py" folders --json` |
+| Find emails | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" search [options] --json` |
+| Read email | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" read <id> --json` |
+| Send email | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" send --to X --subject Y --body Z` |
+| Reply | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" reply <id> --body "text"` |
+| Forward | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" forward <id> --to X` |
+| Calendar | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" cal list/read/create/delete --json` |
+| Tasks | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" tasks list/read/create/complete/delete --json` |
+| Notes | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" notes list/read/create/delete --json` |
+| Export | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" export --output DIR [--stdout]` |
+| Folders | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" folders --json` |
 
 **Note:** All send/reply/forward commands create drafts by default.
 
@@ -135,9 +139,9 @@ This section contains usage instructions for AI agents. For installation and set
 By default, all email commands create drafts. If the user has enabled direct sending (see [docs/install.md](docs/install.md)), you can send immediately:
 
 ```bash
-python "${SKILL_DIR}/outlook.py" send --to X --subject Y --body Z --send
-python "${SKILL_DIR}/outlook.py" reply <id> --body "text" --send
-python "${SKILL_DIR}/outlook.py" forward <id> --to X --send
+${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" send --to X --subject Y --body Z --send
+${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" reply <id> --body "text" --send
+${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" forward <id> --to X --send
 ```
 
 **Before using `--send`, you MUST:**
@@ -155,10 +159,15 @@ python "${SKILL_DIR}/outlook.py" forward <id> --to X --send
 For detailed documentation, load these on demand:
 
 - `${SKILL_DIR}/docs/install.md` — Installation, setup, enabling direct sending
+- `${SKILL_DIR}/docs/features.md` — Human-readable feature guide
+- `${SKILL_DIR}/references/features.md` — Agent-facing feature deep-dive (internal behavior, lifecycle, schemas)
 - `${SKILL_DIR}/references/commands.md` — Full command reference with all options
+- `${SKILL_DIR}/references/direct-send.md` — Enabling and using `--send` per agent
 - `${SKILL_DIR}/references/json-schemas.md` — JSON output formats for all commands
+- `${SKILL_DIR}/references/scripts.md` — Utility scripts and SKILL_DIR variable resolution
 - `${SKILL_DIR}/references/workflows.md` — Common workflow patterns and examples
 - `${SKILL_DIR}/references/troubleshooting.md` — Error handling and common issues
+- `${SKILL_DIR}/references/wsl.md` — WSL setup guide
 
 ### Skill Structure
 
@@ -172,12 +181,17 @@ outlook-cli-skill/
 │   ├── services/
 │   └── utils/
 ├── docs/
-│   └── install.md        # Agent install & setup instructions
+│   ├── install.md        # Agent install & setup instructions
+│   └── features.md       # Human-facing feature guide
 ├── references/
 │   ├── commands.md
+│   ├── direct-send.md
+│   ├── features.md
 │   ├── json-schemas.md
+│   ├── scripts.md
+│   ├── troubleshooting.md
 │   ├── workflows.md
-│   └── troubleshooting.md
+│   └── wsl.md
 ├── scripts/
 │   ├── validate-export.py
 │   └── format-email.py
@@ -189,7 +203,7 @@ outlook-cli-skill/
 
 ### Token Efficiency
 
-- SKILL.md: ~120 lines (loaded when triggered)
+- SKILL.md: ~140 lines (loaded when triggered)
 - References: Loaded on-demand only when needed
 - Scripts: Code never enters context — only output
 - CLI code: Never enters context — runs via shell

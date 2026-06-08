@@ -48,6 +48,8 @@ python "${SKILL_DIR}/outlook.py" folders --json
 
 This requires Outlook desktop to be running on Windows. If it fails, the skill is still installed correctly — it just can't reach Outlook right now.
 
+> **Running from WSL?** See [references/wsl.md](references/wsl.md) for setup.
+
 ---
 
 ## Enabling Direct Sending
@@ -93,3 +95,4 @@ The agent must still confirm with the user before using `--send`. If the env var
 - [README.md](../README.md) — human-facing overview
 - [references/commands.md](../references/commands.md) — full command reference
 - [references/troubleshooting.md](../references/troubleshooting.md) — common issues
+- [references/wsl.md](../references/wsl.md) — WSL setup guide

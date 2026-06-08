@@ -1,13 +1,8 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://img.shields.io/badge/outlook--cli-0.1.0-blue?style=flat-square&logo=microsoftoutlook&logoColor=white&labelColor=1a1a2e">
-    <img alt="Outlook CLI" src="https://img.shields.io/badge/outlook--cli-0.1.0-blue?style=flat-square&logo=microsoftoutlook&logoColor=white&labelColor=f0f0f0">
-  </picture>
-  <img alt="License" src="https://img.shields.io/github/license/ob-cheng/outlook-cli-skill?style=flat-square&color=success">
-  <img alt="Python" src="https://img.shields.io/badge/python-3.10+-informational?style=flat-square&logo=python&logoColor=white">
-  <img alt="Platform" src="https://img.shields.io/badge/platform-windows%20%7C%20wsl-lightgrey?style=flat-square">
-  <img alt="Agent Skills" src="https://img.shields.io/badge/Agent%20Skills-compatible-8A2BE2?style=flat-square">
-</p>
+[![Version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)](https://github.com/ob-cheng/outlook-cli-skill)
+[![License](https://img.shields.io/badge/license-MIT-success?style=flat-square)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10+-informational?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
+[![Platform](https://img.shields.io/badge/platform-windows%20%7C%20wsl-lightgrey?style=flat-square)]()
+[![Agent Skills](https://img.shields.io/badge/Agent%20Skills-compatible-8A2BE2?style=flat-square)](https://agentskills.io)
 
 ---
 

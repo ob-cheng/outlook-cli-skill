@@ -1,3 +1,2 @@
-"""Outlook CLI 2.0 - Complete command-line interface for Microsoft Outlook."""
-
-__version__ = "2.0.0"
+"""Outlook CLI — Complete command-line interface for Microsoft Outlook."""
+__version__ = "0.1.0"

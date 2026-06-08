@@ -13,17 +13,17 @@ outlook-cli-skill/
 │   └── utils/
 ├── docs/
 │   ├── install.md        # Agent install & setup instructions
-│   └── features.md       # Human-facing feature guide
+│   ├── features.md       # Human-facing feature guide
+│   ├── wsl.md            # WSL setup guide
+│   ├── scripts.md        # Utility scripts and SKILL_DIR resolution
+│   └── structure.md      # This file
 ├── references/
 │   ├── commands.md
 │   ├── direct-send.md
 │   ├── features.md
 │   ├── json-schemas.md
-│   ├── scripts.md
-│   ├── structure.md      # This file
 │   ├── troubleshooting.md
-│   ├── workflows.md
-│   └── wsl.md
+│   └── workflows.md
 ├── scripts/
 │   ├── validate-export.py
 │   └── format-email.py

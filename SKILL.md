@@ -1,10 +1,9 @@
 ---
 name: outlook-cli
-description: "Outlook email, calendar, tasks, and notes via CLI. Use when: checking inbox, finding/sending/replying emails, scheduling meetings, checking calendar, managing tasks/notes, exporting emails to markdown/JSON for AI processing. Supports --stdout for direct JSON output to AI agents. Windows-only (COM automation)."
+description: "Use when checking email, inbox, mail, or messages — finding, searching, reading, sending, replying, or forwarding emails. Also use for scheduling meetings or appointments, checking calendar or availability, managing tasks, todos, or notes in Outlook. Covers exporting emails to markdown/JSON, listing folders, managing contacts, and multi-account routing. Trigger phrases: check my inbox, emails from X, send email to, schedule meeting, my calendar, create task, my todos, export emails, what's in my mail, do I have anything tomorrow, any new messages. Works on Windows/WSL via COM automation — no Azure, OAuth, or API keys needed."
 version: 0.4.0
 author: ob-cheng
 license: MIT
-# Platform restriction removed — the skill's description communicates the real requirement (Windows+COM).
 # WSL users: follow docs/wsl.md to set up the Windows Python bridge.
 # Categorization (Hermes discovery)
 domain: email
@@ -15,7 +14,7 @@ tags:
   - tasks
   - notes
   - office
-# Activation rules (works with Claude Code, Hermes, OpenClaw, and other agents)
+# Activation rules
 when_to_use: |
   Use when:
   - User asks to check email, find messages, send/reply/forward
@@ -26,7 +25,6 @@ when_to_use: |
   
   Do NOT use for:
   - Web-based email (Gmail, Office 365 web) - this is COM only
-  - macOS or Linux - Windows only
   - Email providers other than Outlook
 # Tool permissions (agent-specific, most agents auto-detect)
 allowed-tools:
@@ -54,7 +52,6 @@ references:
   - references/config.md
   - references/agent-ergonomics.md
   - references/performance.md
-  # - testing.md omitted — dev-only, not user-facing
 # Hermes-specific config (other agents use instructions in Safety Rules section)
 metadata.hermes:
   config:
@@ -66,57 +63,17 @@ metadata.hermes:
 
 # Outlook CLI Skill
 
-AI-friendly CLI for Microsoft Outlook. Works via COM automation - no Azure setup, no OAuth, no API keys.
+AI-friendly CLI for Microsoft Outlook. Works via COM automation — no Azure setup, no OAuth, no API keys. Windows/WSL only.
+
+> **Installation, setup, and updates:** See [docs/install.md](docs/install.md).
+> **WSL setup:** See [docs/wsl.md](docs/wsl.md) for the `OUTLOOK_CLI_PYTHON` workaround.
+> **Feature deep-dive:** See [references/features.md](references/features.md) for internal behavior, export lifecycle, content processing, and multi-account handling.
 
 ## Strategy
 
 **Search -> Read -> Act**. Find emails first, then read details, then reply/forward/export.
 
 Always add `--json` for structured output when processing programmatically.
-
-> **Installation & setup:** See [docs/install.md](docs/install.md) for agent instructions on installing this skill and enabling direct sending.
-
-## Updating This Skill
-
-There are **two repos** — don't confuse them:
-
-| Repo | Purpose | Location |
-|------|---------|----------|
-| **outlook-cli-skill** | Hermes skill wrapper (this file) | `~/.hermes/skills/email/outlook-cli-skill` — `github.com/ob-cheng/outlook-cli-skill` |
-| **outlook-cli-2.0** | The actual CLI tool binary | `/mnt/c/Users/its_t/AppData/Local/outlook-cli-2.0` — `github.com/ob-cheng/outlook-cli-2.0` |
-
-**To update the Hermes skill** (this SKILL.md + reference files):
-
-```bash
-cd ~/.hermes/skills/email/outlook-cli-skill
-git pull
-```
-
-If `git pull` fails due to local modifications:
-```bash
-git stash && git pull && git stash pop
-```
-
-If `git stash pop` produces merge conflicts, resolve them manually — edit the conflicted file, remove conflict markers, `git add` it.
-
-> **CRITICAL:** Never `git commit --amend` after a commit has been pushed. It rewrites history and diverges from origin. Always create a new fix commit instead.
-
-**To update the CLI tool** (only needed when new features were released):
-
-```bash
-cd /mnt/c/Users/its_t/AppData/Local/outlook-cli-2.0
-git pull
-pip install -r requirements.txt
-python outlook.py --help > /dev/null && echo "CLI OK"
-```
-
-Configuration (`~/.outlook-cli/`) lives outside both repos — updates never touch settings or people data.
-
-> **WSL / non-Windows setup:** See [docs/wsl.md](docs/wsl.md) for the `OUTLOOK_CLI_PYTHON` workaround.
->
-> **Feature deep-dive:** See [references/features.md](references/features.md) for internal behavior, export lifecycle, content processing, multi-account handling, and undocumented logic.
->
-> **Structure & efficiency:** See [docs/structure.md](docs/structure.md) for directory layout and token efficiency.
 
 ## Quick Reference
 
@@ -165,17 +122,15 @@ python outlook.py people lookup email@domain.com
 python outlook.py people add "Full Name" email@domain.com
 ```
 
-**The `read` command handles this automatically** — unknown participants are added and reported. For send/reply/forward, the agent should manually check since those involve the recipients you're sending to.
+**The `read` command handles this automatically** — unknown participants are added and reported. For send/reply/forward, manually check since those involve the recipients you're sending to.
 
-Whenever the user refers to someone by name (e.g. "email Alice about the report"), look them up in the directory:
+Whenever the user refers to someone by name (e.g. "email Alice about the report"), look them up:
 
 ```bash
 python outlook.py people lookup "Alice"
 ```
 
-If found, you have their email. If not found, ask the user for the email and save it.
-
-To view all known people:
+If found, you have their email. If not found, ask the user for the email and save it. To view all known people:
 
 ```bash
 python outlook.py people list [--json]
@@ -196,7 +151,7 @@ python outlook.py search --unread --days 1 --limit 10 --json
 python outlook.py search --filter-email "alice@co.com" --days 7 --json
 ```
 
-### Find emails from someone (name only, unknown email)
+### Find emails by name (unknown email)
 ```bash
 # --filter-email matches SMTP addresses only. When you only know the name:
 # Step 1: discover accounts
@@ -212,13 +167,11 @@ python outlook.py search --folder "work@domain.com/Inbox" --days 7 --filter-doma
 python outlook.py reply <id> --body "My reply" --cc "newcomer@co.com,support@co.com"
 ```
 
-### Export thread to markdown
+### Export to markdown or JSON
 ```bash
+# Markdown files
 python outlook.py export --output ./inbox-export --filter-email "client@co.com" --days 7
-```
 
-### Export to JSON for AI processing
-```bash
 # Single JSON file, token-efficient
 python outlook.py export --output ./data --format json --batch --days 30
 
@@ -228,13 +181,8 @@ python outlook.py export --output . --stdout --days 7
 
 ### Task management
 ```bash
-# List pending tasks
 python outlook.py tasks list --json
-
-# Create with due date and priority
 python outlook.py tasks create --subject "Review PR" --due 2026-05-15 --priority high
-
-# Mark complete
 python outlook.py tasks complete <task-id>
 ```
 
@@ -273,11 +221,11 @@ Prefer batch when you know the full command pipeline upfront (e.g., search → r
 ## Known Pitfalls
 
 ### Large inbox search can be slow
-COM iterates every item in the folder. On 1000+ emails, narrow with `--days 1` or `--limit 20`. The CLI now shows a progress indicator in non-JSON mode.
+COM iterates every item in the folder. On 1000+ emails, narrow with `--days 1` or `--limit 20`.
 
 ### Per-command cold-start (~0.5s) and what's fast/slow
 
-Every CLI invocation pays ~0.5s overhead (Python import: 0.34s + COM Dispatch: 0.22s). Three optimizations are baked in to reduce this and the larger COM data-iteration bottlenecks:
+Every CLI invocation pays ~0.5s overhead (Python import: 0.34s + COM Dispatch: 0.22s). Three optimizations are baked in:
 
 - **Folder cache** (`~/.outlook-cli/folder-cache.json`): First `folders` call walks all stores (16-35s). Subsequent calls return from cache instantly (0.45s). Invalidates automatically when store topology changes. `--refresh` forces a full re-walk.
 - **Calendar/tasks summary mode**: `cal list` and `tasks list` skip expensive COM properties (body, attendees, recurrence details) automatically. `cal list`: 6s → 0.73s. `cal read` still returns full detail.
@@ -285,7 +233,7 @@ Every CLI invocation pays ~0.5s overhead (Python import: 0.34s + COM Dispatch: 0
 
 ### cal create always uses the default delivery store in multi-account profiles
 
-`cal create` calls `outlook.CreateItem(1)` which saves to Outlook's **default delivery store** — not necessarily the account the user considers primary. The default send account and default delivery store are separate concepts in COM. No `--store` flag exists yet. See `references/features.md` for workaround. Tracked: `ob-cheng/outlook-cli-2.0` #2.
+`cal create` calls `outlook.CreateItem(1)` which saves to Outlook's **default delivery store** — not necessarily the account the user considers primary. See `references/features.md` for the `create-event-in-store.py` workaround script.
 
 ### Multi-account: search defaults to primary account
 Search/send/export target the default account. Run `folders` first to see what's connected, then use `--folder "AccountName/Inbox"` to reach another account.
@@ -295,26 +243,6 @@ If a stored message ID fails to load, re-search to get the current ID — Outloo
 
 ### Draft-only is the default
 All compose commands create drafts. Direct sending requires both `send_mode: send` in config AND the `--send` flag.
-
-### git stash pop can produce merge conflicts
-If both your local modifications AND the upstream changed the same files (common for SKILL.md during feature updates), `git stash pop` after `git pull` will produce conflicts. Resolve them manually (edit conflicted file, remove markers, `git add` it) instead of trying to force through.
-
-### Windows Python missing dependencies (first WSL setup)
-First run from WSL often fails because the Windows Python doesn't have the tool's dependencies installed (`rich`, `markdownify`, `beautifulsoup4`, `pywin32`). The auto-detection finds the Python binary fine, then crashes with `ModuleNotFoundError`. Fix — install deps via the Windows Python that `OUTLOOK_CLI_PYTHON` points to:
-
-```bash
-"${OUTLOOK_CLI_PYTHON}" -m pip install -r "${SKILL_DIR}/requirements.txt"
-```
-
-For example, if auto-detected Python313:
-```bash
-"/mnt/c/Users/its_t/AppData/Local/Programs/Python/Python313/python.exe" -m pip install rich markdownify beautifulsoup4 pywin32
-```
-
-This is a one-time setup step. After install, all commands work.
-
-### Testing from WSL (no Outlook COM) — developers only
-When making code changes from WSL, COM won't work. The `tests/` directory has pytest suites that run without COM. See `references/testing.md` in the repo for mock patterns and CI setup.
 
 ## Safety Rules
 
@@ -327,15 +255,18 @@ When making code changes from WSL, COM won't work. The `tests/` directory has py
 **Always confirm before:** deleting events/tasks/notes
 **Never:** delete without confirmation, forward sensitive emails without verification
 
-> **Workflows & patterns:** See [references/workflows.md](references/workflows.md) for common email, calendar, and task workflows.
->
-> **Utility scripts & SKILL_DIR:** See [docs/scripts.md](docs/scripts.md) for script docs and directory variable resolution.
->
+## Verification Checklist
+
+- [ ] Ran `folders` (or used cache) to know which accounts are connected
+- [ ] Used `--json` for structured output when parsing programmatically
+- [ ] People directory checked/updated for any new contacts encountered
+- [ ] Draft-only: confirmed email saved as draft (unless `--send` + `send_mode: send`)
+- [ ] Batch mode used for multi-command workflows (search → read → reply)
+- [ ] Narrowed search with `--days` or `--limit` on large inboxes
+
+> **Workflows & patterns:** See [references/workflows.md](references/workflows.md).
 > **Command details:** See [references/commands.md](references/commands.md) when you need all flags/options beyond the Quick Reference table.
 > **Config reference:** See [references/config.md](references/config.md) for draft instructions, humanizer, and send mode settings.
->
-> **JSON schemas:** See [references/json-schemas.md](references/json-schemas.md) when parsing output programmatically and you need the exact schema.
->
-> **Troubleshooting:** See [references/troubleshooting.md](references/troubleshooting.md) when commands fail or produce unexpected results.
->
-> **Agent ergonomics:** See [references/agent-ergonomics.md](references/agent-ergonomics.md) for known agent-side friction points, workarounds, and GitHub issues for missing features.
+> **JSON schemas:** See [references/json-schemas.md](references/json-schemas.md) when parsing output programmatically.
+> **Troubleshooting:** See [references/troubleshooting.md](references/troubleshooting.md) when commands fail.
+> **Agent ergonomics:** See [references/agent-ergonomics.md](references/agent-ergonomics.md) for known agent-side friction points and workarounds.

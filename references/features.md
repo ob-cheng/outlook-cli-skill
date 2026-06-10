@@ -108,6 +108,33 @@ Calendar, Tasks, and Notes search **all stores** accessible in Outlook — no co
 - Invitations sent automatically with attendees
 - Default reminder: 15 min; use `--no-reminder` to disable
 
+### ⚠️ Multi-account creation limitation
+`cal create` calls `outlook.CreateItem(1)` internally, which saves to Outlook's **default delivery store** (`namespace.GetDefaultFolder(9)`). This is often *not* the default send account — they are separate concepts in Outlook's COM model. In a multi-account profile, new events land in whichever mailbox is configured as the primary delivery location.
+
+There is no `--store` flag yet. Tracked upstream: `ob-cheng/outlook-cli-2.0` issue #2.
+
+**Workaround** — target a specific store's calendar by walking `namespace.Folders` and using `folder.Items.Add(1)` instead:
+
+```python
+import win32com.client as win32
+from datetime import datetime
+
+outlook = win32.Dispatch('Outlook.Application')
+ns = outlook.GetNamespace("MAPI")
+
+# Find the store by name
+target = next((ns.Folders.Item(i) for i in range(1, ns.Folders.Count + 1)
+               if "alcon" in ns.Folders.Item(i).Name.lower()), None)
+# Find Calendar subfolder
+def find_cal(f):
+    return f if "calendar" in f.Name.lower() else next(
+        (find_cal(f.Folders.Item(j)) for j in range(1, f.Folders.Count + 1)), None)
+cal = next((find_cal(target.Folders.Item(j)) for j in range(1, target.Folders.Count + 1)), None)
+appt = cal.Items.Add(1)
+appt.Subject, appt.Start, appt.End = "Meeting", datetime(2026,6,11,11,0,0), datetime(2026,6,11,13,0,0)
+appt.Save()
+```
+
 ### Filters
 `--subject`, `--location`, `--organizer`, `--all-day`, `--recurring`
 

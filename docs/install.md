@@ -77,6 +77,21 @@ The skill will auto-detect your Windows Python path and suggest the correct valu
 
 > **Detailed WSL guide:** See [docs/wsl.md](wsl.md) for more options.
 
+### WSL: Windows Python missing dependencies
+
+First run from WSL may fail with `ModuleNotFoundError` if the Windows Python doesn't have the tool's dependencies. Fix:
+
+```bash
+"${OUTLOOK_CLI_PYTHON}" -m pip install rich markdownify beautifulsoup4 pywin32
+```
+
+Or with the explicit path:
+```bash
+"/mnt/c/Users/<username>/AppData/Local/Programs/Python/Python313/python.exe" -m pip install rich markdownify beautifulsoup4 pywin32
+```
+
+This is a one-time setup step. After install, all commands work.
+
 ---
 
 ## First-Time Setup (Ask the User)

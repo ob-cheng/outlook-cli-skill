@@ -57,7 +57,7 @@ references:
 metadata.hermes:
   config:
     - key: outlook.draft_only_mode
-      description: "[Config] Draft-only mode — when enabled, emails are saved as drafts instead of being sent"
+      help: "Draft-only mode — when enabled, emails are saved as drafts instead of being sent"
       default: true
       prompt: Enable draft-only mode for email safety?
 ---

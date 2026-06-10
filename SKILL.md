@@ -254,6 +254,9 @@ If a stored message ID fails to load, re-search to get the current ID — Outloo
 ### Draft-only is the default
 All compose commands create drafts. Direct sending requires both `send_mode: send` in config AND the `--send` flag.
 
+### git stash pop can produce merge conflicts
+If both your local modifications AND the upstream changed the same files (common for SKILL.md during feature updates), `git stash pop` after `git pull` will produce conflicts. Resolve them manually (edit conflicted file, remove markers, `git add` it) instead of trying to force through.
+
 ### Testing from WSL (no Outlook COM) — developers only
 When making code changes from WSL, COM won't work. The `tests/` directory has pytest suites that run without COM. See `references/testing.md` in the repo for mock patterns and CI setup.
 

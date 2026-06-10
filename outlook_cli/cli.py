@@ -68,6 +68,10 @@ def create_parser() -> argparse.ArgumentParser:
         help='List all available Outlook folders',
     )
     folders_parser.add_argument('--json', action='store_true', help='Output as JSON')
+    folders_parser.add_argument(
+        '--refresh', action='store_true',
+        help='Force a full COM namespace walk (skip folder cache)',
+    )
 
     # =========================================================================
     # search command
@@ -465,6 +469,20 @@ def create_parser() -> argparse.ArgumentParser:
     notes_delete.add_argument('--json', action='store_true', help='Output as JSON')
 
     # =========================================================================
+    # batch command
+    # =========================================================================
+    batch_parser = subparsers.add_parser(
+        'batch',
+        help='Run multiple commands in a single process (avoids repeated cold starts)',
+    )
+    batch_parser.add_argument(
+        '--commands', '-c',
+        type=str,
+        required=True,
+        help='JSON array of command arrays, e.g. \'[["search","--json"],["read","ID","--json"]]\'',
+    )
+
+    # =========================================================================
     # config command
     # =========================================================================
     config_parser = subparsers.add_parser(
@@ -610,12 +628,18 @@ def _get_date_range(args) -> tuple[datetime | None, datetime | None]:
 def cmd_folders(args) -> int:
     """Handle 'folders' command."""
     from .core.folders import list_all_folders
+    from .core.folder_cache import invalidate_cache
 
     if not getattr(args, 'json', False):
         print("Connecting to Outlook...")
     _, namespace = connect_to_outlook()
 
-    folders = list_all_folders(namespace)
+    # Handle --refresh: invalidate cache so the walk populates fresh data.
+    # Pass use_cache=True — load will miss (cache deleted), walk runs, save writes.
+    if getattr(args, 'refresh', False):
+        invalidate_cache()
+
+    folders = list_all_folders(namespace, use_cache=True)
 
     if getattr(args, 'json', False):
         _output_json(_json_success({"folders": folders}))
@@ -1564,6 +1588,88 @@ def cmd_notes(args) -> int:
     return 0
 
 
+def cmd_batch(args) -> int:
+    """Handle 'batch' command — run multiple commands in a single process.
+
+    Input format: JSON array of command arrays.
+    Example: --commands '[["search","--unread","--json"],["read","ID123","--json"]]'
+    """
+    commands = json.loads(args.commands)
+    if not isinstance(commands, list):
+        print(json.dumps({"success": False, "error": "commands must be a JSON array"}))
+        return 1
+
+    parser = create_parser()
+    results = []
+
+    for i, cmd_parts in enumerate(commands):
+        if not isinstance(cmd_parts, list) or len(cmd_parts) == 0:
+            results.append({"index": i, "success": False, "error": "Each command must be a non-empty array"})
+            continue
+
+        cmd_name = cmd_parts[0]
+        cmd_args = cmd_parts[1:]
+
+        try:
+            sub_args = parser.parse_args([cmd_name] + cmd_args)
+        except SystemExit:
+            results.append({"index": i, "command": cmd_name, "success": False, "error": "Invalid arguments"})
+            continue
+
+        # Capture stdout for this command
+        import io
+        old_stdout = sys.stdout
+        sys.stdout = io.StringIO()
+
+        exit_code = 0
+        try:
+            if cmd_name == 'folders':
+                exit_code = cmd_folders(sub_args)
+            elif cmd_name == 'search':
+                exit_code = cmd_search(sub_args)
+            elif cmd_name == 'export':
+                exit_code = cmd_export(sub_args)
+            elif cmd_name == 'read':
+                exit_code = cmd_read(sub_args)
+            elif cmd_name == 'send':
+                exit_code = cmd_send(sub_args)
+            elif cmd_name == 'reply':
+                exit_code = cmd_reply(sub_args)
+            elif cmd_name == 'forward':
+                exit_code = cmd_forward(sub_args)
+            elif cmd_name == 'config':
+                exit_code = cmd_config(sub_args)
+            elif cmd_name == 'people':
+                exit_code = cmd_people(sub_args)
+            elif cmd_name == 'cal':
+                exit_code = cmd_cal(sub_args)
+            elif cmd_name == 'tasks':
+                exit_code = cmd_tasks(sub_args)
+            elif cmd_name == 'notes':
+                exit_code = cmd_notes(sub_args)
+            else:
+                exit_code = 1
+                sys.stderr.write(f"Unknown command: {cmd_name}")
+        except Exception as e:
+            exit_code = 1
+            sys.stderr.write(str(e))
+        finally:
+            output = sys.stdout.getvalue()
+            sys.stdout = old_stdout
+
+        result = {
+            "index": i,
+            "command": cmd_name,
+            "success": exit_code == 0,
+            "exit_code": exit_code,
+            "output": output,
+        }
+        results.append(result)
+
+    print(json.dumps({"success": True, "results": results}, indent=2, ensure_ascii=False))
+    return 0
+
+
 def main() -> int:
     """Main entry point."""
     parser = create_parser()
@@ -1598,6 +1704,8 @@ def main() -> int:
             return cmd_tasks(args)
         elif args.command == 'notes':
             return cmd_notes(args)
+        elif args.command == 'batch':
+            return cmd_batch(args)
         else:
             parser.print_help()
             return 1

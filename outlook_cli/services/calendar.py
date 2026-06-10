@@ -33,8 +33,14 @@ class CalendarEvent:
             self.categories = []
 
     @classmethod
-    def from_appointment(cls, appt) -> 'CalendarEvent':
-        """Create CalendarEvent from Outlook AppointmentItem."""
+    def from_appointment(cls, appt, summary_only: bool = False) -> 'CalendarEvent':
+        """Create CalendarEvent from Outlook AppointmentItem.
+
+        Args:
+            appt: Outlook AppointmentItem COM object.
+            summary_only: If True, skip expensive properties (body, attendees,
+                          recurrence pattern, reminder) for fast list views.
+        """
         try:
             subject = appt.Subject or "(No Subject)"
         except Exception:
@@ -56,7 +62,7 @@ class CalendarEvent:
             location = None
 
         try:
-            body = appt.Body or None
+            body = None if summary_only else (appt.Body or None)
         except Exception:
             body = None
 
@@ -65,19 +71,20 @@ class CalendarEvent:
         except Exception:
             organizer = None
 
-        # Attendees
+        # Attendees — expensive COM iteration, skip in summary mode
         required = []
         optional = []
-        try:
-            for i in range(1, appt.Recipients.Count + 1):
-                recip = appt.Recipients.Item(i)
-                email = recip.Address
-                if recip.Type == 1:  # Required
-                    required.append(email)
-                elif recip.Type == 2:  # Optional
-                    optional.append(email)
-        except Exception:
-            pass
+        if not summary_only:
+            try:
+                for i in range(1, appt.Recipients.Count + 1):
+                    recip = appt.Recipients.Item(i)
+                    email = recip.Address
+                    if recip.Type == 1:  # Required
+                        required.append(email)
+                    elif recip.Type == 2:  # Optional
+                        optional.append(email)
+            except Exception:
+                pass
 
         try:
             is_all_day = appt.AllDayEvent
@@ -90,7 +97,7 @@ class CalendarEvent:
             is_recurring = False
 
         recurrence_pattern = None
-        if is_recurring:
+        if is_recurring and not summary_only:
             try:
                 rec_pattern = appt.GetRecurrencePattern()
                 recurrence_pattern = cls._format_recurrence(rec_pattern)
@@ -119,7 +126,9 @@ class CalendarEvent:
             importance = "normal"
 
         try:
-            reminder_minutes = appt.ReminderMinutesBeforeStart if appt.ReminderSet else None
+            reminder_minutes = None if summary_only else (
+                appt.ReminderMinutesBeforeStart if appt.ReminderSet else None
+            )
         except Exception:
             reminder_minutes = None
 
@@ -258,7 +267,7 @@ class CalendarService:
                     if recurring_only and not appt.IsRecurring:
                         continue
 
-                    event = CalendarEvent.from_appointment(appt)
+                    event = CalendarEvent.from_appointment(appt, summary_only=True)
                     events.append(event)
 
                 except Exception:

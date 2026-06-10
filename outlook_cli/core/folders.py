@@ -17,12 +17,39 @@ DEFAULT_FOLDERS = {
 }
 
 
-def list_all_folders(namespace) -> list[dict]:
+def list_all_folders(namespace, use_cache: bool = True) -> list[dict]:
     """Recursively list all folders in the mailbox.
+
+    Args:
+        namespace: Outlook MAPI namespace.
+        use_cache: If True, return cached tree when fingerprint matches.
+                   Set False to force a full namespace walk.
 
     Returns:
         List of dicts with keys: name, path, level, is_store
     """
+    # Check cache first (fast path — fingerprint only, no tree walk)
+    if use_cache:
+        from .folder_cache import load_cache, save_cache
+        cached = load_cache(namespace)
+        if cached is not None:
+            return cached
+
+    folders = _walk_folders(namespace)
+
+    # Save to cache for next call
+    if use_cache:
+        try:
+            from .folder_cache import save_cache
+            save_cache(folders, namespace)
+        except Exception:
+            pass  # cache write failure shouldn't break the command
+
+    return folders
+
+
+def _walk_folders(namespace) -> list[dict]:
+    """Recursively walk the namespace folder tree (no caching)."""
     folders = []
 
     def traverse_folders(folder_collection, path="", level=0):

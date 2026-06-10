@@ -25,8 +25,13 @@ class Task:
             self.categories = []
 
     @classmethod
-    def from_task_item(cls, task_item) -> 'Task':
-        """Create Task from Outlook TaskItem."""
+    def from_task_item(cls, task_item, summary_only: bool = False) -> 'Task':
+        """Create Task from Outlook TaskItem.
+
+        Args:
+            task_item: Outlook TaskItem COM object.
+            summary_only: If True, skip expensive properties (body) for fast list views.
+        """
         try:
             subject = task_item.Subject or "(No Subject)"
         except Exception:
@@ -73,7 +78,7 @@ class Task:
             priority = "normal"
 
         try:
-            body = task_item.Body or None
+            body = None if summary_only else (task_item.Body or None)
         except Exception:
             body = None
 
@@ -224,7 +229,7 @@ class TaskService:
                         if category.lower() not in task_categories.lower():
                             continue
 
-                    task = Task.from_task_item(task_item)
+                    task = Task.from_task_item(task_item, summary_only=True)
                     tasks.append(task)
 
                 except Exception:

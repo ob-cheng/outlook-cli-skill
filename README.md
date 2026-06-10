@@ -120,7 +120,7 @@ This repo follows the [Agent Skills Spec](https://agentskills.io). When loaded b
 | **[references/config.md](references/config.md)** | Draft instructions, humanizer, send mode settings |
 | **[references/workflows.md](references/workflows.md)** | Common email, calendar, and task workflows |
 | **[references/features.md](references/features.md)** | Internal behavior, edge cases, export lifecycle |
-| **[references/testing.md](references/testing.md)** | COM-free testing patterns — mock setup, pytest, monkey-patching |
+| _(developer docs: see `docs/developers.md` in the repo)_ | Testing patterns, mock setup, pytest |
 | **[references/troubleshooting.md](references/troubleshooting.md)** | Debugging when commands fail |
 | **[references/direct-send.md](references/direct-send.md)** | Direct send mode setup and behavior |
 | **[docs/install.md](docs/install.md)** | Installation across all platforms |
@@ -172,19 +172,10 @@ outlook-cli-skill/
 ├── outlook.py            # Entry point
 ├── requirements.txt      # Python dependencies
 ├── README.md             # You are here
-├── tests/                # Unit tests (52 tests, no COM needed)
-│   ├── conftest.py
-│   ├── test_argparse.py
-│   ├── test_search.py
-│   ├── test_compose.py
-│   ├── test_folders.py
-│   └── test_progress.py
 ├── scripts/              # Utility scripts
-│   ├── smoke-test.py     # Windows COM smoke tests
 │   ├── validate-export.py
 │   └── format-email.py
 ├── docs/                 # Human & agent-facing documentation
-│   ├── features.md       # Feature walkthroughs
 │   ├── install.md        # Installation guide
 │   ├── wsl.md            # WSL setup
 │   ├── structure.md      # Directory layout
@@ -194,7 +185,6 @@ outlook-cli-skill/
     ├── config.md         # Draft instructions, humanizer, send mode
     ├── workflows.md      # Common workflows
     ├── features.md       # Internal edge cases & undocumented logic
-    ├── testing.md        # COM-free testing patterns
     ├── troubleshooting.md
     └── direct-send.md    # Direct send mode
 
@@ -210,8 +200,8 @@ cd path/to/outlook-cli-skill
 git pull
 pip install -r requirements.txt   # only needed if dependencies changed
 
-# Verify nothing broke (works from WSL/Linux too — no COM needed)
-python -m pytest tests/ -q
+# Quick smoke check (no test scripts needed)
+python outlook.py --help > /dev/null && echo "CLI OK"
 ```
 
 Your configuration (`~/.outlook-cli/config.json`) and people directory (`~/.outlook-cli/people.json`) live outside the repo — `git pull` will never touch them.
@@ -221,6 +211,15 @@ If a `git pull` fails due to local changes (e.g. you modified a reference doc), 
 ```bash
 git stash && git pull && git stash pop
 ```
+
+## For Developers
+
+This is a user-facing README. Developer resources live in the repo but aren't
+advertised here so users don't trip over them:
+
+- **`tests/`** — pytest suite (no COM needed, runs on Linux/WSL)
+- **`scripts/smoke-test.py`** — Windows COM smoke test (needs Outlook)
+- **`references/testing.md`** — mock patterns, monkey-patching, CI setup
 
 ## License
 

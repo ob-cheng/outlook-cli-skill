@@ -52,7 +52,7 @@ references:
   - references/features.md
   - docs/structure.md
   - references/config.md
-  - references/testing.md
+  # - testing.md omitted — dev-only, not user-facing
 # Hermes-specific config (other agents use instructions in Safety Rules section)
 metadata.hermes:
   config:
@@ -83,8 +83,8 @@ cd "${SKILL_DIR}"
 git pull
 pip install -r requirements.txt
 
-# Verify nothing broke (works from WSL too — no COM needed)
-python -m pytest tests/ -q
+# Quick smoke check (no test scripts needed)
+python outlook.py --help > /dev/null && echo "CLI OK"
 ```
 
 If `git pull` fails due to local modifications:

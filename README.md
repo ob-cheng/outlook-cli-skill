@@ -190,6 +190,22 @@ outlook-cli-skill/
 └── people.json
 ```
 
+## Updating
+
+```bash
+cd path/to/outlook-cli-skill
+git pull
+pip install -r requirements.txt   # only needed if dependencies changed
+```
+
+Your configuration (`~/.outlook-cli/config.json`) and people directory (`~/.outlook-cli/people.json`) live outside the repo — `git pull` will never touch them.
+
+If a `git pull` fails due to local changes (e.g. you modified a reference doc), stash first:
+
+```bash
+git stash && git pull && git stash pop
+```
+
 ## License
 
 MIT — do what you want with it. See [LICENSE](LICENSE) for the legalese.

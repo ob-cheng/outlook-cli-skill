@@ -111,6 +111,26 @@ When `send_mode: send` is set and `--send` is used, the user must still confirm 
 
 ---
 
+## Updating the Skill
+
+To pull the latest version:
+
+```bash
+cd "${SKILL_DIR}"
+git pull
+pip install -r "${SKILL_DIR}/requirements.txt"
+```
+
+Configuration and user data live in `~/.outlook-cli/` — outside the repo — so `git pull` won't touch settings, people data, or any personal state.
+
+If `git pull` fails due to local modifications:
+
+```bash
+git stash && git pull && git stash pop
+```
+
+---
+
 ## Related
 
 - [SKILL.md](../SKILL.md) — skill trigger rules and command reference

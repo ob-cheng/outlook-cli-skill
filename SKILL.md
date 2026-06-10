@@ -4,11 +4,8 @@ description: Search, send, and manage Outlook emails, calendar, tasks, and notes
 version: 0.2.1
 author: ob-cheng
 license: MIT
-# Platform restriction (Hermes uses 'platforms', Claude Code uses 'compatibility')
-platforms:
-  - windows
-compatibility:
-  - windows
+# Platform restriction removed — the skill's description communicates the real requirement (Windows+COM).
+# WSL users: follow docs/wsl.md to set up the Windows Python bridge.
 # Categorization (Hermes discovery)
 domain: productivity
 tags:

@@ -154,8 +154,27 @@ def create_parser() -> argparse.ArgumentParser:
     )
     read_parser.add_argument(
         'message_ids',
-        nargs='+',
+        nargs='*',
         help='One or more message IDs (EntryID) to read',
+    )
+    read_parser.add_argument(
+        '--last',
+        type=int,
+        nargs='?',
+        const=1,
+        metavar='N',
+        help='Read the Nth result from the last search (default: 1 = most recent)',
+    )
+    read_parser.add_argument(
+        '--text-only',
+        action='store_true',
+        help='Return only plain text body (no HTML), more token-efficient',
+    )
+    read_parser.add_argument(
+        '--max-body-lines',
+        type=int,
+        metavar='N',
+        help='Truncate body to first N lines',
     )
     read_parser.add_argument('--json', action='store_true', help='Output as JSON')
 
@@ -221,7 +240,16 @@ def create_parser() -> argparse.ArgumentParser:
     )
     reply_parser.add_argument(
         'message_id',
+        nargs='?',
         help='The message ID (EntryID) to reply to',
+    )
+    reply_parser.add_argument(
+        '--last',
+        type=int,
+        nargs='?',
+        const=1,
+        metavar='N',
+        help='Reply to the Nth result from the last search (default: 1 = most recent)',
     )
     reply_parser.add_argument(
         '--body', '-b',
@@ -273,7 +301,16 @@ def create_parser() -> argparse.ArgumentParser:
     )
     forward_parser.add_argument(
         'message_id',
+        nargs='?',
         help='The message ID (EntryID) to forward',
+    )
+    forward_parser.add_argument(
+        '--last',
+        type=int,
+        nargs='?',
+        const=1,
+        metavar='N',
+        help='Forward the Nth result from the last search (default: 1 = most recent)',
     )
     forward_parser.add_argument(
         '--to', '-t',
@@ -533,6 +570,12 @@ def _add_search_args(parser: argparse.ArgumentParser) -> None:
         help='Search for keyword in subject/body',
     )
     parser.add_argument(
+        '--filter-name',
+        type=str,
+        action='append',
+        help='Filter by sender display name (substring match). Can specify multiple.',
+    )
+    parser.add_argument(
         '--limit', '-N',
         type=int,
         default=None,
@@ -610,6 +653,8 @@ def cmd_search(args) -> int:
             print(f"  Filter domains: {', '.join(args.filter_domain)}")
         if args.keyword:
             print(f"  Keyword: {args.keyword}")
+        if args.filter_name:
+            print(f"  Filter names: {', '.join(args.filter_name)}")
 
     # Search
     search = SearchService(namespace)
@@ -621,9 +666,14 @@ def cmd_search(args) -> int:
         filter_emails=args.filter_email,
         filter_domains=args.filter_domain,
         filter_keyword=args.keyword,
+        filter_names=args.filter_name,
         limit=args.limit,
         progress_callback=None if json_mode else _print_progress_dot,
     )
+
+    # Cache results for --last shorthand
+    from .core.last_search import save_last_search
+    save_last_search(emails)
 
     if json_mode:
         # Run export first if requested (before early return)
@@ -707,6 +757,7 @@ def cmd_export(args) -> int:
         filter_emails=args.filter_email,
         filter_domains=args.filter_domain,
         filter_keyword=args.keyword,
+        filter_names=getattr(args, 'filter_name', None),
         limit=args.limit,
     )
 
@@ -773,6 +824,35 @@ def cmd_export(args) -> int:
 def cmd_read(args) -> int:
     """Handle 'read' command."""
     json_mode = getattr(args, 'json', False)
+    text_only = getattr(args, 'text_only', False)
+    max_body_lines = getattr(args, 'max_body_lines', None)
+    last_n = getattr(args, 'last', None)
+
+    # Get message IDs from args or from --last cache
+    message_ids = args.message_ids if args.message_ids else []
+
+    if last_n is not None:
+        from .core.last_search import get_last_message_id, get_last_search_info
+        msg_id = get_last_message_id(index=last_n - 1)  # 1-indexed for users
+        if not msg_id:
+            info = get_last_search_info()
+            if not info:
+                err = "No previous search results found. Run a search first."
+            else:
+                err = f"Result #{last_n} not found. Last search had {info.get('count', 0)} results."
+            if json_mode:
+                _output_json(_json_error(err, "last_not_found"))
+            else:
+                print(f"Error: {err}")
+            return 1
+        message_ids = [msg_id]
+
+    if not message_ids:
+        if json_mode:
+            _output_json(_json_error("No message IDs provided. Use message IDs or --last.", "no_ids"))
+        else:
+            print("Error: No message IDs provided. Use message IDs or --last.")
+        return 1
 
     if not json_mode:
         print("Connecting to Outlook...")
@@ -782,7 +862,7 @@ def cmd_read(args) -> int:
 
     emails = []
     not_found = []
-    for message_id in args.message_ids:
+    for message_id in message_ids:
         email = search.get_message_by_id(message_id)
         if email:
             emails.append(email)
@@ -810,7 +890,7 @@ def cmd_read(args) -> int:
             return 1
         result = _json_success({
             "count": len(emails),
-            "emails": [e.to_dict(include_body=True) for e in emails],
+            "emails": [e.to_dict(include_body=True, text_only=text_only, max_body_lines=max_body_lines) for e in emails],
             "not_found": not_found if not_found else None,
             "people_added": added if added else None,
         })
@@ -821,7 +901,7 @@ def cmd_read(args) -> int:
     for i, email in enumerate(emails):
         if i > 0:
             print("\n" + "=" * 80 + "\n")
-        viewer.print_email_detail(email)
+        viewer.print_email_detail(email, text_only=text_only, max_body_lines=max_body_lines)
 
     if not_found:
         print(f"\nMessages not found: {len(not_found)}")
@@ -896,6 +976,32 @@ def cmd_send(args) -> int:
 def cmd_reply(args) -> int:
     """Handle 'reply' command."""
     json_mode = getattr(args, 'json', False)
+    last_n = getattr(args, 'last', None)
+
+    # Resolve message_id from --last or positional arg
+    message_id = args.message_id
+    if last_n is not None:
+        from .core.last_search import get_last_message_id, get_last_search_info
+        message_id = get_last_message_id(index=last_n - 1)
+        if not message_id:
+            info = get_last_search_info()
+            if not info:
+                err = "No previous search results found. Run a search first."
+            else:
+                err = f"Result #{last_n} not found. Last search had {info.get('count', 0)} results."
+            if json_mode:
+                _output_json(_json_error(err, "last_not_found"))
+            else:
+                print(f"Error: {err}")
+            return 1
+
+    if not message_id:
+        err = "No message ID provided. Use message_id or --last."
+        if json_mode:
+            _output_json(_json_error(err, "no_id"))
+        else:
+            print(f"Error: {err}")
+        return 1
 
     # Determine if we should send immediately
     send_immediately = False
@@ -922,7 +1028,7 @@ def cmd_reply(args) -> int:
     bcc = [e.strip() for e in args.bcc.split(',') if e.strip()] if args.bcc else None
 
     success, message = compose.reply(
-        message_id=args.message_id,
+        message_id=message_id,
         body=args.body,
         reply_all=args.all,
         attachments=args.attach,
@@ -950,6 +1056,32 @@ def cmd_reply(args) -> int:
 def cmd_forward(args) -> int:
     """Handle 'forward' command."""
     json_mode = getattr(args, 'json', False)
+    last_n = getattr(args, 'last', None)
+
+    # Resolve message_id from --last or positional arg
+    message_id = args.message_id
+    if last_n is not None:
+        from .core.last_search import get_last_message_id, get_last_search_info
+        message_id = get_last_message_id(index=last_n - 1)
+        if not message_id:
+            info = get_last_search_info()
+            if not info:
+                err = "No previous search results found. Run a search first."
+            else:
+                err = f"Result #{last_n} not found. Last search had {info.get('count', 0)} results."
+            if json_mode:
+                _output_json(_json_error(err, "last_not_found"))
+            else:
+                print(f"Error: {err}")
+            return 1
+
+    if not message_id:
+        err = "No message ID provided. Use message_id or --last."
+        if json_mode:
+            _output_json(_json_error(err, "no_id"))
+        else:
+            print(f"Error: {err}")
+        return 1
 
     # Determine if we should send immediately
     send_immediately = False
@@ -977,7 +1109,7 @@ def cmd_forward(args) -> int:
 
     compose = ComposeService(namespace)
     success, message = compose.forward(
-        message_id=args.message_id,
+        message_id=message_id,
         to=to,
         body=args.body,
         cc=cc,

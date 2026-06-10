@@ -25,6 +25,7 @@ class SearchService:
         filter_emails: list[str] | None = None,
         filter_domains: list[str] | None = None,
         filter_keyword: str | None = None,
+        filter_names: list[str] | None = None,
         max_recipients: int = 20,
         limit: int | None = None,
         progress_callback: Callable[[int], None] | None = None,
@@ -39,6 +40,7 @@ class SearchService:
             filter_emails: List of email addresses to filter by (matches From/To/CC).
             filter_domains: List of domains to filter by.
             filter_keyword: Keyword to search in subject/body.
+            filter_names: List of sender display names to filter by (substring match).
             max_recipients: Skip emails with more recipients (mass distribution).
             limit: Stop after N matching emails.
             progress_callback: Called with cumulative count during extraction (for progress dots).
@@ -63,7 +65,7 @@ class SearchService:
                     emails = self._extract_from_folder(
                         folder, since_date, until_date, is_sent,
                         filter_emails, filter_domains, filter_keyword,
-                        unread_only, max_recipients,
+                        filter_names, unread_only, max_recipients,
                         limit=remaining, progress_callback=progress_callback,
                     )
                     all_emails.extend(emails)
@@ -77,7 +79,7 @@ class SearchService:
             all_emails.extend(self._extract_from_folder(
                 inbox, since_date, until_date, False,
                 filter_emails, filter_domains, filter_keyword,
-                unread_only, max_recipients,
+                filter_names, unread_only, max_recipients,
                 limit=remaining, progress_callback=progress_callback,
             ))
             if remaining is not None:
@@ -88,7 +90,7 @@ class SearchService:
             all_emails.extend(self._extract_from_folder(
                 sent, since_date, until_date, True,
                 filter_emails, filter_domains, filter_keyword,
-                unread_only, max_recipients,
+                filter_names, unread_only, max_recipients,
                 limit=remaining, progress_callback=progress_callback,
             ))
 
@@ -126,6 +128,7 @@ class SearchService:
         filter_emails: list[str] | None,
         filter_domains: list[str] | None,
         filter_keyword: str | None,
+        filter_names: list[str] | None,
         unread_only: bool,
         max_recipients: int,
         limit: int | None = None,
@@ -178,6 +181,10 @@ class SearchService:
                     if (filter_emails or filter_domains):
                         if not self._matches_email_filter(email, filter_emails, filter_domains, max_recipients):
                             continue
+
+                    # Apply sender name filter
+                    if filter_names and not self._matches_name_filter(email, filter_names):
+                        continue
 
                     # Apply keyword filter
                     if filter_keyword and not self._matches_keyword(email, filter_keyword):
@@ -259,6 +266,14 @@ class SearchService:
             if matches_domain(addr):
                 return True
 
+        return False
+
+    def _matches_name_filter(self, email: Email, filter_names: list[str]) -> bool:
+        """Check if email sender display name matches any of the filter names (substring, case-insensitive)."""
+        sender_name = (email.sender_clean or '').lower()
+        for name in filter_names:
+            if name.lower() in sender_name:
+                return True
         return False
 
     def _matches_keyword(self, email: Email, keyword: str) -> bool:

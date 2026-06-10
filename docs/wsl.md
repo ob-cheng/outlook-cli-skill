@@ -2,11 +2,21 @@
 
 If running this skill from **inside WSL** (Windows Subsystem for Linux), WSL's Python cannot use COM automation (`pywin32`). The CLI must be run via Windows Python instead.
 
+## Auto-Detection (New!)
+
+The skill now **auto-detects** common Windows Python paths when running from WSL. If `OUTLOOK_CLI_PYTHON` is not set, it will:
+
+1. Probe common installation paths (`AppData/Local/Programs/Python/...`, `Program Files/...`)
+2. Print the detected path with copy-paste setup instructions
+3. Exit with a clear error message
+
+Just run any command and the skill will tell you exactly what to set.
+
 ## How it works
 
 The skill uses `${OUTLOOK_CLI_PYTHON:-python}` in all commands. Set the `OUTLOOK_CLI_PYTHON` env var to your Windows Python interpreter path — the fallback `:-python` ensures native Windows users are unaffected.
 
-## Setup
+## Manual Setup
 
 ### 1. Find your Windows Python
 

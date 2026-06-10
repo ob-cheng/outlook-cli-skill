@@ -104,8 +104,14 @@ class ViewerService:
         self.console.print(table)
         self.console.print(f"\n[dim]Total: {len(emails)} email(s)[/dim]")
 
-    def print_email_detail(self, email: Email) -> None:
-        """Print a single email in detail."""
+    def print_email_detail(self, email: Email, text_only: bool = False, max_body_lines: int | None = None) -> None:
+        """Print a single email in detail.
+
+        Args:
+            email: The email to display.
+            text_only: Only show plain text body.
+            max_body_lines: Truncate body to first N lines.
+        """
         # Header info
         header_lines = []
         header_lines.append(f"[bold]From:[/bold] {email.sender_clean or email.sender}")
@@ -143,7 +149,11 @@ class ViewerService:
         ))
 
         # Print body
-        body = self._clean_body(email)
+        body = self._clean_body(email, text_only=text_only)
+        if max_body_lines and body:
+            lines = body.split('\n')
+            if len(lines) > max_body_lines:
+                body = '\n'.join(lines[:max_body_lines]) + f'\n... (truncated, {len(lines) - max_body_lines} more lines)'
         if body:
             self.console.print()
             self.console.print(body)
@@ -154,12 +164,20 @@ class ViewerService:
         if email.message_id:
             self.console.print(f"\n[dim]Message ID: {email.message_id}[/dim]")
 
-    def _clean_body(self, email: Email) -> str:
-        """Extract and clean email body."""
+    def _clean_body(self, email: Email, text_only: bool = False) -> str:
+        """Extract and clean email body.
+
+        Args:
+            email: The email to extract body from.
+            text_only: If True, only use text_body, skip HTML parsing.
+        """
         import re
         from bs4 import BeautifulSoup
 
-        if email.html_body:
+        if text_only and email.text_body:
+            return email.text_body.strip()
+
+        if email.html_body and not text_only:
             soup = BeautifulSoup(email.html_body, 'html.parser')
 
             # Remove scripts, styles

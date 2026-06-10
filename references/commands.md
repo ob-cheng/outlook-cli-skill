@@ -21,6 +21,7 @@ python "${SKILL_DIR}/outlook.py" search [options]
 | `--unread` | Only unread messages |
 | `--filter-email ADDRESS` | Filter by email address (can specify multiple) |
 | `--filter-domain DOMAIN` | Filter by domain (can specify multiple) |
+| `--filter-name NAME` | Filter by sender display name (substring match, can specify multiple) |
 | `--keyword TEXT` | Search in subject/body |
 | `--limit N` | Stop after N matching emails (for large inboxes) |
 | `--export DIR` | Also export results to markdown |
@@ -30,10 +31,18 @@ python "${SKILL_DIR}/outlook.py" search [options]
 ### read - View email content
 
 ```bash
-python outlook.py read <message-id> [<message-id>...] [--json]
+python outlook.py read <message-id> [<message-id>...] [options]
+python outlook.py read --last [N] [options]
 ```
 
 Get message IDs from search results. Can read multiple emails at once.
+
+| Option | Description |
+|--------|-------------|
+| `--last [N]` | Read Nth result from last search (default: 1 = most recent) |
+| `--text-only` | Return only plain text body (no HTML), more token-efficient |
+| `--max-body-lines N` | Truncate body to first N lines |
+| `--json` | Output as JSON |
 
 ### send - Compose and send email
 
@@ -59,12 +68,14 @@ python outlook.py send --to ADDRESS --subject TEXT --body TEXT [options]
 
 ```bash
 python outlook.py reply <message-id> --body TEXT [options]
+python outlook.py reply --last [N] --body TEXT [options]
 ```
 
 > **Draft by default.** Replies are saved as drafts unless `--send` is passed.
 
 | Option | Description |
 |--------|-------------|
+| `--last [N]` | Reply to Nth result from last search (default: 1 = most recent) |
 | `--body TEXT` | Reply message (required) |
 | `--all` | Reply to all recipients |
 | `--cc ADDRESS` | Additional CC recipients (comma-separated) |
@@ -78,12 +89,14 @@ python outlook.py reply <message-id> --body TEXT [options]
 
 ```bash
 python outlook.py forward <message-id> --to ADDRESS [options]
+python outlook.py forward --last [N] --to ADDRESS [options]
 ```
 
 > **Draft by default.** Forwards are saved as drafts unless `--send` is passed.
 
 | Option | Description |
 |--------|-------------|
+| `--last [N]` | Forward Nth result from last search (default: 1 = most recent) |
 | `--to ADDRESS` | Forward recipient (required, comma-separated) |
 | `--body TEXT` | Optional message to add |
 | `--cc ADDRESS` | CC recipients |

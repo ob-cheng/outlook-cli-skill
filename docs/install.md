@@ -48,7 +48,34 @@ python "${SKILL_DIR}/outlook.py" folders --json
 
 This requires Outlook desktop to be running on Windows. If it fails, the skill is still installed correctly — it just can't reach Outlook right now.
 
-> **Running from WSL?** See [references/wsl.md](references/wsl.md) for setup.
+---
+
+## WSL Setup (One-liner)
+
+If running from WSL, set `OUTLOOK_CLI_PYTHON` to your Windows Python path. The skill auto-detects common paths and suggests the correct one if missing.
+
+**Quick setup** — add to your shell profile (`~/.bashrc` or `~/.zshrc`):
+
+```bash
+export OUTLOOK_CLI_PYTHON="/mnt/c/Users/<your-username>/AppData/Local/Programs/Python/Python312/python.exe"
+```
+
+**For Hermes Agent** — add to `~/.hermes/config.yaml`:
+
+```yaml
+env:
+  OUTLOOK_CLI_PYTHON: "/mnt/c/Users/<your-username>/AppData/Local/Programs/Python/Python312/python.exe"
+```
+
+**For Claude Code** — add to `.claude/settings.json`:
+
+```json
+{"env": {"OUTLOOK_CLI_PYTHON": "/mnt/c/Users/<your-username>/AppData/Local/Programs/Python/Python312/python.exe"}}
+```
+
+The skill will auto-detect your Windows Python path and suggest the correct value if you run it without the env var set.
+
+> **Detailed WSL guide:** See [docs/wsl.md](wsl.md) for more options.
 
 ---
 

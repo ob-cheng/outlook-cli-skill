@@ -1,7 +1,14 @@
-"""Shared test fixtures and mocks for outlook-cli tests."""
+"""Shared test fixtures and mocks for outlook-cli tests.
+
+This module provides common fixtures for testing outlook-cli without COM dependencies.
+All tests use monkeypatching and mocks to avoid win32com requirements.
+"""
 
 import pytest
+from datetime import datetime
 from unittest.mock import MagicMock, PropertyMock
+
+from outlook_cli.core.models import Email
 
 
 @pytest.fixture
@@ -91,3 +98,67 @@ def mock_namespace(mock_items_collection):
     # Expose the inbox folder so tests can inject items into it
     ns._inbox_folder = inbox_folder
     return ns
+
+
+@pytest.fixture
+def sample_email():
+    """Create a sample Email object for testing."""
+    return Email(
+        subject="Test Subject",
+        sender="Alice <alice@example.com>",
+        sender_clean="Alice",
+        sender_domain="example.com",
+        sender_smtp="alice@example.com",
+        to="Bob <bob@example.com>",
+        to_names=["Bob"],
+        to_emails=["bob@example.com"],
+        cc=None,
+        cc_emails=[],
+        date=datetime(2024, 3, 15, 10, 30),
+        html_body="<p>Test HTML content</p>",
+        text_body="Test text content",
+        is_sent=False,
+        is_read=True,
+        importance="normal",
+        has_attachments=False,
+        message_id="test-message-id-123",
+    )
+
+
+@pytest.fixture
+def sample_emails():
+    """Create a list of sample Email objects for testing."""
+    return [
+        Email(
+            subject="Email 1",
+            sender="alice@example.com",
+            sender_clean="Alice",
+            sender_domain="example.com",
+            sender_smtp="alice@example.com",
+            to="bob@example.com",
+            to_names=["Bob"],
+            to_emails=["bob@example.com"],
+            cc=None,
+            cc_emails=[],
+            date=datetime(2024, 3, 15, 10, 0),
+            html_body=None,
+            text_body="Content 1",
+            message_id="id-1",
+        ),
+        Email(
+            subject="Email 2",
+            sender="bob@example.com",
+            sender_clean="Bob",
+            sender_domain="example.com",
+            sender_smtp="bob@example.com",
+            to="alice@example.com",
+            to_names=["Alice"],
+            to_emails=["alice@example.com"],
+            cc=None,
+            cc_emails=[],
+            date=datetime(2024, 3, 15, 11, 0),
+            html_body=None,
+            text_body="Content 2",
+            message_id="id-2",
+        ),
+    ]

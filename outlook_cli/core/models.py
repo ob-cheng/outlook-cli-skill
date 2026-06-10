@@ -149,8 +149,14 @@ class Email:
             message_id=message_id,
         )
 
-    def to_dict(self, include_body: bool = True) -> dict:
-        """Convert to dictionary for JSON serialization."""
+    def to_dict(self, include_body: bool = True, text_only: bool = False, max_body_lines: int | None = None) -> dict:
+        """Convert to dictionary for JSON serialization.
+
+        Args:
+            include_body: Include body content in output.
+            text_only: Only include text_body, omit html_body (more token-efficient).
+            max_body_lines: Truncate text_body to first N lines.
+        """
         result = {
             'message_id': self.message_id,
             'subject': self.subject,
@@ -168,6 +174,12 @@ class Email:
             'has_attachments': self.has_attachments,
         }
         if include_body:
-            result['text_body'] = self.text_body
-            result['html_body'] = self.html_body
+            text_body = self.text_body
+            if max_body_lines and text_body:
+                lines = text_body.split('\n')
+                if len(lines) > max_body_lines:
+                    text_body = '\n'.join(lines[:max_body_lines]) + f'\n... (truncated, {len(lines) - max_body_lines} more lines)'
+            result['text_body'] = text_body
+            if not text_only:
+                result['html_body'] = self.html_body
         return result

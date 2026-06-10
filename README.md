@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.2.1-blue?style=flat-square)](https://github.com/ob-cheng/outlook-cli-skill)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue?style=flat-square)](https://github.com/ob-cheng/outlook-cli-skill)
 [![License](https://img.shields.io/badge/license-MIT-success?style=flat-square)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-informational?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
 [![Platform](https://img.shields.io/badge/platform-windows%20%7C%20wsl-lightgrey?style=flat-square)]()
@@ -23,7 +23,7 @@ Works with any AI agent that supports the [Agent Skills Spec](https://agentskill
 | **Tasks** | Create, list, update, and complete Outlook tasks with priority, due dates, categories. |
 | **Notes** | Create and manage Outlook notes from the terminal with color-coding. |
 | **Export** | Export emails to markdown (Obsidian-ready) or JSON. Incremental tracking, thread grouping, batch mode, stdout. |
-| **Folders** | List all Outlook folders by name, path, and item count. |
+| **Folders** | List all Outlook folders by name and path. |
 | **People Directory** | Auto-tracked contact list — every email read adds unknown senders/recipients. Lookup, add, list. |
 | **Config** | Draft-only vs direct send, custom drafting instructions, humanizer integration. |
 
@@ -46,7 +46,7 @@ pip install -r outlook-cli-skill/requirements.txt
 
 # Verify
 python outlook-cli-skill/outlook.py --version
-# → outlook 0.2.0
+# → outlook 0.3.0
 ```
 
 Your AI agent can do all of this for you with a single command — just ask it to install the skill.
@@ -120,6 +120,7 @@ This repo follows the [Agent Skills Spec](https://agentskills.io). When loaded b
 | **[references/config.md](references/config.md)** | Draft instructions, humanizer, send mode settings |
 | **[references/workflows.md](references/workflows.md)** | Common email, calendar, and task workflows |
 | **[references/features.md](references/features.md)** | Internal behavior, edge cases, export lifecycle |
+| **[references/testing.md](references/testing.md)** | COM-free testing patterns — mock setup, pytest, monkey-patching |
 | **[references/troubleshooting.md](references/troubleshooting.md)** | Debugging when commands fail |
 | **[references/direct-send.md](references/direct-send.md)** | Direct send mode setup and behavior |
 | **[docs/install.md](docs/install.md)** | Installation across all platforms |
@@ -171,6 +172,17 @@ outlook-cli-skill/
 ├── outlook.py            # Entry point
 ├── requirements.txt      # Python dependencies
 ├── README.md             # You are here
+├── tests/                # Unit tests (52 tests, no COM needed)
+│   ├── conftest.py
+│   ├── test_argparse.py
+│   ├── test_search.py
+│   ├── test_compose.py
+│   ├── test_folders.py
+│   └── test_progress.py
+├── scripts/              # Utility scripts
+│   ├── smoke-test.py     # Windows COM smoke tests
+│   ├── validate-export.py
+│   └── format-email.py
 ├── docs/                 # Human & agent-facing documentation
 │   ├── features.md       # Feature walkthroughs
 │   ├── install.md        # Installation guide
@@ -182,6 +194,7 @@ outlook-cli-skill/
     ├── config.md         # Draft instructions, humanizer, send mode
     ├── workflows.md      # Common workflows
     ├── features.md       # Internal edge cases & undocumented logic
+    ├── testing.md        # COM-free testing patterns
     ├── troubleshooting.md
     └── direct-send.md    # Direct send mode
 
@@ -196,6 +209,9 @@ outlook-cli-skill/
 cd path/to/outlook-cli-skill
 git pull
 pip install -r requirements.txt   # only needed if dependencies changed
+
+# Verify nothing broke (works from WSL/Linux too — no COM needed)
+python -m pytest tests/ -q
 ```
 
 Your configuration (`~/.outlook-cli/config.json`) and people directory (`~/.outlook-cli/people.json`) live outside the repo — `git pull` will never touch them.

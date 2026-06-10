@@ -1,7 +1,7 @@
 ---
 name: outlook-cli
 description: "Outlook email, calendar, tasks, and notes via CLI. Use when: checking inbox, finding/sending/replying emails, scheduling meetings, checking calendar, managing tasks/notes, exporting emails to markdown/JSON for AI processing. Supports --stdout for direct JSON output to AI agents. Windows-only (COM automation)."
-version: 2.0.0
+version: 0.3.1
 author: ob-cheng
 license: MIT
 # Platform restriction removed — the skill's description communicates the real requirement (Windows+COM).

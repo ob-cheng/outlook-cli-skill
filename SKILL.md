@@ -1,7 +1,7 @@
 ---
 name: outlook-cli
 description: Outlook email, calendar, tasks, and notes via CLI. Use when: checking inbox, finding/sending/replying emails, scheduling meetings, checking calendar, managing tasks/notes, exporting emails. Windows-only (COM automation).
-version: 0.3.0
+version: 0.3.1
 author: ob-cheng
 license: MIT
 # Platform restriction removed — the skill's description communicates the real requirement (Windows+COM).

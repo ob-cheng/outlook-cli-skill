@@ -1,4 +1,4 @@
-[![Version](https://img.shields.io/badge/version-0.3.0-blue?style=flat-square)](https://github.com/ob-cheng/outlook-cli-skill)
+[![Version](https://img.shields.io/badge/version-0.3.1-blue?style=flat-square)](https://github.com/ob-cheng/outlook-cli-skill)
 [![License](https://img.shields.io/badge/license-MIT-success?style=flat-square)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-informational?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
 [![Platform](https://img.shields.io/badge/platform-windows%20%7C%20wsl-lightgrey?style=flat-square)]()
@@ -46,7 +46,7 @@ pip install -r outlook-cli-skill/requirements.txt
 
 # Verify
 python outlook-cli-skill/outlook.py --version
-# → outlook 0.3.0
+# → outlook 0.3.1
 ```
 <br>
 <blockquote><b>Copy-paste this to your AI agent:</b><br>

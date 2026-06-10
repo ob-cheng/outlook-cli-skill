@@ -74,6 +74,26 @@ Always add `--json` for structured output when processing programmatically.
 
 > **Installation & setup:** See [docs/install.md](docs/install.md) for agent instructions on installing this skill and enabling direct sending.
 
+## Updating This Skill
+
+When the user asks to update the skill, or when a new version is available:
+
+```bash
+cd "${SKILL_DIR}"
+git pull
+pip install -r requirements.txt
+
+# Verify nothing broke (works from WSL too — no COM needed)
+python -m pytest tests/ -q
+```
+
+If `git pull` fails due to local modifications:
+```bash
+git stash && git pull && git stash pop
+```
+
+Configuration (`~/.outlook-cli/`) lives outside the repo — updates never touch settings or people data.
+
 > **WSL / non-Windows setup:** See [docs/wsl.md](docs/wsl.md) for the `OUTLOOK_CLI_PYTHON` workaround.
 >
 > **Feature deep-dive:** See [references/features.md](references/features.md) for internal behavior, export lifecycle, content processing, multi-account handling, and undocumented logic.

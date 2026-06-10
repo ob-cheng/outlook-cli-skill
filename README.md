@@ -48,8 +48,10 @@ pip install -r outlook-cli-skill/requirements.txt
 python outlook-cli-skill/outlook.py --version
 # → outlook 0.3.0
 ```
-
-Your AI agent can do all of this for you with a single command — just ask it to install the skill.
+<br>
+<blockquote><b>Copy-paste this to your AI agent:</b><br>
+<code>install the outlook-cli skill from https://github.com/ob-cheng/outlook-cli-skill</code>
+</blockquote>
 
 ## Draft-Only Mode (Default)
 

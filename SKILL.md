@@ -7,7 +7,7 @@ license: MIT
 # Platform restriction removed — the skill's description communicates the real requirement (Windows+COM).
 # WSL users: follow docs/wsl.md to set up the Windows Python bridge.
 # Categorization (Hermes discovery)
-domain: productivity
+domain: email
 tags:
   - email
   - calendar
@@ -52,6 +52,7 @@ references:
   - references/features.md
   - docs/structure.md
   - references/config.md
+  - references/testing.md
 # Hermes-specific config (other agents use instructions in Safety Rules section)
 metadata.hermes:
   config:
@@ -198,6 +199,16 @@ If a stored message ID fails to load, re-search to get the current ID — Outloo
 ### Draft-only is the default
 All compose commands create drafts. Direct sending requires both `send_mode: send` in config AND the `--send` flag.
 
+### Testing from WSL (no Outlook COM)
+When making code changes from WSL, COM won't work — but you can still run meaningful tests:
+
+1. **Arg parsing:** `python3 outlook.py <command> --help` — verify new flags appear
+2. **Import check:** `python3 -c "from outlook_cli.services.compose import ComposeService"` — catches syntax/import errors
+3. **Isolated argparse:** Recreate the parser in a standalone script and test edge cases (empty strings, comma-separated lists, default values)
+4. **Simulation:** For stateful logic like progress dots, run the function standalone with sample inputs
+
+**Never** ship after `py_compile` alone. At minimum, exercise argparse and imports.
+
 ## Safety Rules
 
 **Draft-Only Mode:** The CLI defaults to draft mode. All send/reply/forward commands create drafts by default.
@@ -219,3 +230,5 @@ All compose commands create drafts. Direct sending requires both `send_mode: sen
 > **JSON schemas:** See [references/json-schemas.md](references/json-schemas.md) when parsing output programmatically and you need the exact schema.
 >
 > **Troubleshooting:** See [references/troubleshooting.md](references/troubleshooting.md) when commands fail or produce unexpected results.
+>
+> **Testing (WSL/Linux):** See [references/testing.md](references/testing.md) for mock patterns, pytest setup, and the monkey-patch approach for COM-free unit testing.

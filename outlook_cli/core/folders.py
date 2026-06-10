@@ -132,26 +132,55 @@ def find_folder_by_name(namespace, folder_name):
 
 
 def find_folder_across_stores(namespace, folder_name: str):
-    """Find a folder by name across ALL stores, skipping the GetDefaultFolder shortcut.
+    """Find a folder by name, preferring the default store.
 
-    Unlike find_folder_by_name, this always searches every store recursively instead of
-    falling back to GetDefaultFolder() for well-known folder names. Needed for multi-account
-    setups where calendar/tasks/notes data lives in a non-default store.
+    Strategy:
+    1. Try the default store's folder via GetDefaultFolder() — most common case.
+       If it exists and has items, return it immediately.
+    2. Search all stores for the first non-empty match.
+    3. Fallback: return default store's folder even if empty (caller has a valid folder).
+
+    Unlike find_folder_by_name, this never returns a match from a non-default store
+    when the default store's folder already has data — avoiding the silent switch
+    to a wrong account when namespace store enumeration order changes.
 
     Args:
         namespace: Outlook MAPI namespace
         folder_name: Folder name to find (case-insensitive)
 
     Returns:
-        Folder object from the first matching store, or None
+        Folder object, or None
     """
     target = folder_name.lower().strip()
 
+    default_map = {
+        'calendar': 9, 'tasks': 13, 'notes': 12,
+        'inbox': 6, 'sent items': 5, 'drafts': 16,
+        'deleted items': 3, 'junk email': 23, 'contacts': 10,
+    }
+
+    def _folder_has_items(folder):
+        """Check if a folder has items, swallowing exceptions."""
+        try:
+            return folder.Items.Count > 0
+        except Exception:
+            return False
+
+    # Step 1: Default store first (handles 95% of cases and is stable)
+    if target in default_map:
+        try:
+            folder = namespace.GetDefaultFolder(default_map[target])
+            if _folder_has_items(folder):
+                return folder
+        except Exception:
+            pass
+
+    # Step 2: Search all stores for first non-empty match
     def recursive_search(folder_collection):
         for i in range(1, folder_collection.Count + 1):
             try:
                 folder = folder_collection.Item(i)
-                if folder.Name.lower() == target:
+                if folder.Name.lower() == target and _folder_has_items(folder):
                     return folder
                 if folder.Folders.Count > 0:
                     result = recursive_search(folder.Folders)
@@ -164,7 +193,7 @@ def find_folder_across_stores(namespace, folder_name: str):
     for i in range(1, namespace.Folders.Count + 1):
         try:
             store = namespace.Folders.Item(i)
-            if store.Name.lower() == target:
+            if store.Name.lower() == target and _folder_has_items(store):
                 return store
             result = recursive_search(store.Folders)
             if result:
@@ -172,12 +201,7 @@ def find_folder_across_stores(namespace, folder_name: str):
         except Exception:
             continue
 
-    # Fallback to GetDefaultFolder if nothing found across stores
-    default_map = {
-        'calendar': 9, 'tasks': 13, 'notes': 12,
-        'inbox': 6, 'sent items': 5, 'drafts': 16,
-        'deleted items': 3, 'junk email': 23, 'contacts': 10,
-    }
+    # Step 3: Fallback — default store folder even if empty
     if target in default_map:
         try:
             return namespace.GetDefaultFolder(default_map[target])

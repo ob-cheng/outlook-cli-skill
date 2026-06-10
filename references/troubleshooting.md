@@ -230,6 +230,23 @@ python "${SKILL_DIR}/outlook.py" read <id> --json | jq -r '.emails[0].body'
 
 ## Performance Tips
 
+### Verifying the folder cache is working
+
+The folder cache is the biggest performance optimization (16-35s → 0.45s). If `folders` is still slow, the cache may not be populated:
+
+```bash
+# Check if cache file exists
+ls ~/.outlook-cli/folder-cache.json
+
+# Force populate (one-time, takes 10-15s)
+python outlook.py folders --refresh
+
+# Verify subsequent calls are fast (should be < 1s)
+time python outlook.py folders --json
+```
+
+Cache auto-invalidates when store topology changes (accounts added/removed) and refreshes every 24h. Use `--refresh` to force a full re-walk at any time.
+
 ### Slow searches
 
 1. Narrow date range (`--days`)

@@ -1,7 +1,7 @@
 ---
 name: outlook-cli
-description: Outlook email, calendar, tasks, and notes via CLI. Use when: checking inbox, finding/sending/replying emails, scheduling meetings, checking calendar, managing tasks/notes, exporting emails. Windows-only (COM automation).
-version: 0.3.1
+description: "Outlook email, calendar, tasks, and notes via CLI. Use when: checking inbox, finding/sending/replying emails, scheduling meetings, checking calendar, managing tasks/notes, exporting emails to markdown/JSON for AI processing. Supports --stdout for direct JSON output to AI agents. Windows-only (COM automation)."
+version: 2.0.0
 author: ob-cheng
 license: MIT
 # Platform restriction removed — the skill's description communicates the real requirement (Windows+COM).
@@ -38,7 +38,7 @@ argument-hint: "an email action like 'find unread emails' or 'send email to alic
 # Metadata
 metadata:
   author: ob-cheng
-  last-updated: "2026-06-09"
+  last-updated: "2026-06-11"
 # Reference documents (on-demand loading)
 references:
   - docs/install.md
@@ -52,6 +52,7 @@ references:
   - references/features.md
   - docs/structure.md
   - references/config.md
+  - references/agent-ergonomics.md
   # - testing.md omitted — dev-only, not user-facing
 # Hermes-specific config (other agents use instructions in Safety Rules section)
 metadata.hermes:
@@ -79,17 +80,19 @@ Always add `--json` for structured output when processing programmatically.
 When the user asks to update the skill, or when a new version is available:
 
 ```bash
-cd "${SKILL_DIR}"
+cd /mnt/c/Users/its_t/AppData/Local/outlook-cli-2.0
 git pull
-pip install -r requirements.txt
-
-# Quick smoke check (no test scripts needed)
-python outlook.py --help > /dev/null && echo "CLI OK"
+pip install -r requirements.txt  # OK on native Windows; may need a venv on WSL
 ```
 
 If `git pull` fails due to local modifications:
 ```bash
 git stash && git pull && git stash pop
+```
+
+**Verify the update** — no test scripts needed:
+```bash
+python outlook.py --help > /dev/null && echo "CLI OK"
 ```
 
 Configuration (`~/.outlook-cli/`) lives outside the repo — updates never touch settings or people data.
@@ -114,7 +117,7 @@ Run all commands using `${OUTLOOK_CLI_PYTHON:-python}` (set only in WSL; falls b
 | Calendar | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" cal list/read/create/delete` |
 | Tasks | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" tasks list/read/create/complete/delete` |
 | Notes | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" notes list/read/create/delete` |
-| Export | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" export --output DIR [--stdout]` |
+| Export | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" export --output DIR [--format json] [--batch] [--stdout]` |
 | Folders | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" folders` |
 | People | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" people list/lookup/add` |
 | Config | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" config show/set/clear` |
@@ -177,6 +180,17 @@ python outlook.py search --unread --days 1 --limit 10 --json
 python outlook.py search --filter-email "alice@co.com" --days 7 --json
 ```
 
+### Find emails from someone (name only, unknown email)
+```bash
+# --filter-email matches SMTP addresses only. When you only know the name:
+# Step 1: discover accounts
+python outlook.py folders --json
+# Step 2: search broadly in the right account's inbox, then inspect sender_clean
+python outlook.py search --folder "work@domain.com/Inbox" --days 7 --json
+# Step 3: or narrow by domain when you know the organization
+python outlook.py search --folder "work@domain.com/Inbox" --days 7 --filter-domain "alcon.com" --json
+```
+
 ### Reply with extra CC
 ```bash
 python outlook.py reply <id> --body "My reply" --cc "newcomer@co.com,support@co.com"
@@ -185,6 +199,27 @@ python outlook.py reply <id> --body "My reply" --cc "newcomer@co.com,support@co.
 ### Export thread to markdown
 ```bash
 python outlook.py export --output ./inbox-export --filter-email "client@co.com" --days 7
+```
+
+### Export to JSON for AI processing
+```bash
+# Single JSON file, token-efficient
+python outlook.py export --output ./data --format json --batch --days 30
+
+# Direct JSON to stdout (no files, best for AI pipelines)
+python outlook.py export --output . --stdout --days 7
+```
+
+### Task management
+```bash
+# List pending tasks
+python outlook.py tasks list --json
+
+# Create with due date and priority
+python outlook.py tasks create --subject "Review PR" --due 2026-05-15 --priority high
+
+# Mark complete
+python outlook.py tasks complete <task-id>
 ```
 
 ### Calendar today
@@ -219,15 +254,8 @@ If a stored message ID fails to load, re-search to get the current ID — Outloo
 ### Draft-only is the default
 All compose commands create drafts. Direct sending requires both `send_mode: send` in config AND the `--send` flag.
 
-### Testing from WSL (no Outlook COM)
-When making code changes from WSL, COM won't work — but you can still run meaningful tests:
-
-1. **Arg parsing:** `python3 outlook.py <command> --help` — verify new flags appear
-2. **Import check:** `python3 -c "from outlook_cli.services.compose import ComposeService"` — catches syntax/import errors
-3. **Isolated argparse:** Recreate the parser in a standalone script and test edge cases (empty strings, comma-separated lists, default values)
-4. **Simulation:** For stateful logic like progress dots, run the function standalone with sample inputs
-
-**Never** ship after `py_compile` alone. At minimum, exercise argparse and imports.
+### Testing from WSL (no Outlook COM) — developers only
+When making code changes from WSL, COM won't work. The `tests/` directory has pytest suites that run without COM. See `references/testing.md` in the repo for mock patterns and CI setup.
 
 ## Safety Rules
 
@@ -251,4 +279,4 @@ When making code changes from WSL, COM won't work — but you can still run mean
 >
 > **Troubleshooting:** See [references/troubleshooting.md](references/troubleshooting.md) when commands fail or produce unexpected results.
 >
-> **Testing (WSL/Linux):** See [references/testing.md](references/testing.md) for mock patterns, pytest setup, and the monkey-patch approach for COM-free unit testing.
+> **Agent ergonomics:** See [references/agent-ergonomics.md](references/agent-ergonomics.md) for known agent-side friction points, workarounds, and GitHub issues for missing features.

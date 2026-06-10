@@ -21,7 +21,7 @@ def list_all_folders(namespace) -> list[dict]:
     """Recursively list all folders in the mailbox.
 
     Returns:
-        List of dicts with keys: name, path, level, count, is_store
+        List of dicts with keys: name, path, level, is_store
     """
     folders = []
 
@@ -34,7 +34,6 @@ def list_all_folders(namespace) -> list[dict]:
                     'name': folder.Name,
                     'path': folder_path,
                     'level': level,
-                    'count': folder.Items.Count if hasattr(folder, 'Items') else 0
                 })
                 if folder.Folders.Count > 0:
                     traverse_folders(folder.Folders, folder_path, level + 1)
@@ -48,7 +47,6 @@ def list_all_folders(namespace) -> list[dict]:
                 'name': store.Name,
                 'path': store.Name,
                 'level': 0,
-                'count': 0,
                 'is_store': True
             })
             traverse_folders(store.Folders, store.Name, 1)

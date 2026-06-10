@@ -2,7 +2,7 @@
 
 import re
 from datetime import datetime
-from typing import Optional
+from typing import Callable, Optional
 
 from ..core.models import Email
 from ..core.folders import find_folder_by_name, find_folder_by_path
@@ -26,6 +26,8 @@ class SearchService:
         filter_domains: list[str] | None = None,
         filter_keyword: str | None = None,
         max_recipients: int = 20,
+        limit: int | None = None,
+        progress_callback: Callable[[int], None] | None = None,
     ) -> list[Email]:
         """Search emails across folders with filters.
 
@@ -38,23 +40,35 @@ class SearchService:
             filter_domains: List of domains to filter by.
             filter_keyword: Keyword to search in subject/body.
             max_recipients: Skip emails with more recipients (mass distribution).
+            limit: Stop after N matching emails.
+            progress_callback: Called with cumulative count during extraction (for progress dots).
 
         Returns:
             List of Email objects matching the criteria.
         """
         all_emails = []
+        remaining = limit
+
+        # Guard: limit=0 means return nothing
+        if remaining is not None and remaining <= 0:
+            return all_emails
 
         if folders:
             for folder_name in folders:
+                if remaining is not None and remaining <= 0:
+                    break
                 folder = self._find_folder(folder_name)
                 if folder:
                     is_sent = folder_name.lower() in ['sent', 'sent items', 'outbox']
                     emails = self._extract_from_folder(
                         folder, since_date, until_date, is_sent,
                         filter_emails, filter_domains, filter_keyword,
-                        unread_only, max_recipients
+                        unread_only, max_recipients,
+                        limit=remaining, progress_callback=progress_callback,
                     )
                     all_emails.extend(emails)
+                    if remaining is not None:
+                        remaining -= len(emails)
         else:
             # Default: Inbox + Sent Items
             inbox = self.namespace.GetDefaultFolder(6)
@@ -63,12 +77,19 @@ class SearchService:
             all_emails.extend(self._extract_from_folder(
                 inbox, since_date, until_date, False,
                 filter_emails, filter_domains, filter_keyword,
-                unread_only, max_recipients
+                unread_only, max_recipients,
+                limit=remaining, progress_callback=progress_callback,
             ))
+            if remaining is not None:
+                remaining -= len(all_emails)
+                if remaining <= 0:
+                    return all_emails
+
             all_emails.extend(self._extract_from_folder(
                 sent, since_date, until_date, True,
                 filter_emails, filter_domains, filter_keyword,
-                unread_only, max_recipients
+                unread_only, max_recipients,
+                limit=remaining, progress_callback=progress_callback,
             ))
 
         return all_emails
@@ -107,9 +128,12 @@ class SearchService:
         filter_keyword: str | None,
         unread_only: bool,
         max_recipients: int,
+        limit: int | None = None,
+        progress_callback: Callable[[int], None] | None = None,
     ) -> list[Email]:
         """Extract emails from a single folder."""
         emails = []
+        scanned = 0
 
         try:
             items = folder.Items
@@ -140,6 +164,11 @@ class SearchService:
                         continue
 
                     email = Email.from_mail_item(mail, is_sent)
+                    scanned += 1
+
+                    # Progress callback
+                    if progress_callback:
+                        progress_callback(scanned)
 
                     # Skip auto-replies
                     if self._is_auto_reply(email.subject):
@@ -155,6 +184,10 @@ class SearchService:
                         continue
 
                     emails.append(email)
+
+                    # Stop if limit reached
+                    if limit is not None and len(emails) >= limit:
+                        break
 
                 except Exception:
                     continue

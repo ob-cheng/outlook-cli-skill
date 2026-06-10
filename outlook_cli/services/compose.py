@@ -80,6 +80,8 @@ class ComposeService:
         attachments: list[str | Path] | None = None,
         html: bool = False,
         send_immediately: bool = True,
+        cc: list[str] | None = None,
+        bcc: list[str] | None = None,
     ) -> tuple[bool, str]:
         """Reply to an existing email.
 
@@ -90,6 +92,8 @@ class ComposeService:
             attachments: List of file paths to attach
             html: If True, body is HTML; otherwise plain text
             send_immediately: If True, send now; if False, save to Drafts
+            cc: Additional CC recipients to add beyond thread participants
+            bcc: Additional BCC recipients to add
 
         Returns:
             tuple: (success: bool, message_id_or_error: str)
@@ -101,6 +105,16 @@ class ComposeService:
                 reply = original.ReplyAll()
             else:
                 reply = original.Reply()
+
+            # Add extra CC/BCC recipients
+            if cc:
+                for addr in cc:
+                    recipient = reply.Recipients.Add(addr)
+                    recipient.Type = 2  # olCC
+            if bcc:
+                for addr in bcc:
+                    recipient = reply.Recipients.Add(addr)
+                    recipient.Type = 3  # olBCC
 
             # Add body (prepend to existing quoted text)
             if html:

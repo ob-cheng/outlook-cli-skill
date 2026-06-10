@@ -246,6 +246,18 @@ def create_parser() -> argparse.ArgumentParser:
         help='Body is HTML format',
     )
     reply_parser.add_argument(
+        '--cc',
+        type=str,
+        default='',
+        help='CC recipients (comma-separated)',
+    )
+    reply_parser.add_argument(
+        '--bcc',
+        type=str,
+        default='',
+        help='BCC recipients (comma-separated)',
+    )
+    reply_parser.add_argument(
         '--send',
         action='store_true',
         help='Send immediately (requires send_mode: send in config)',
@@ -520,6 +532,20 @@ def _add_search_args(parser: argparse.ArgumentParser) -> None:
         type=str,
         help='Search for keyword in subject/body',
     )
+    parser.add_argument(
+        '--limit', '-N',
+        type=int,
+        default=None,
+        help='Stop after N matching emails (useful for large inboxes)',
+    )
+
+
+def _print_progress_dot(count: int) -> None:
+    """Print a progress dot every N emails during search."""
+    if count % 20 == 0:
+        if count == 20:
+            print("  Scanning", end='', flush=True)
+        print('.', end='', flush=True)
 
 
 def _get_date_range(args) -> tuple[datetime | None, datetime | None]:
@@ -595,6 +621,8 @@ def cmd_search(args) -> int:
         filter_emails=args.filter_email,
         filter_domains=args.filter_domain,
         filter_keyword=args.keyword,
+        limit=args.limit,
+        progress_callback=None if json_mode else _print_progress_dot,
     )
 
     if json_mode:
@@ -679,6 +707,7 @@ def cmd_export(args) -> int:
         filter_emails=args.filter_email,
         filter_domains=args.filter_domain,
         filter_keyword=args.keyword,
+        limit=args.limit,
     )
 
     if not quiet_mode:
@@ -888,6 +917,10 @@ def cmd_reply(args) -> int:
     _, namespace = connect_to_outlook()
 
     compose = ComposeService(namespace)
+    # Parse CC/BCC recipients
+    cc = [e.strip() for e in args.cc.split(',') if e.strip()] if args.cc else None
+    bcc = [e.strip() for e in args.bcc.split(',') if e.strip()] if args.bcc else None
+
     success, message = compose.reply(
         message_id=args.message_id,
         body=args.body,
@@ -895,6 +928,8 @@ def cmd_reply(args) -> int:
         attachments=args.attach,
         html=args.html,
         send_immediately=send_immediately,
+        cc=cc,
+        bcc=bcc,
     )
 
     if json_mode:

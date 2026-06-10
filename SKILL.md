@@ -1,7 +1,7 @@
 ---
 name: outlook-cli
 description: Outlook email, calendar, tasks, and notes via CLI. Use when: checking inbox, finding/sending/replying emails, scheduling meetings, checking calendar, managing tasks/notes, exporting emails. Windows-only (COM automation).
-version: 0.2.1
+version: 0.3.0
 author: ob-cheng
 license: MIT
 # Platform restriction removed — the skill's description communicates the real requirement (Windows+COM).
@@ -56,7 +56,7 @@ references:
 metadata.hermes:
   config:
     - key: outlook.draft_only_mode
-      description: When true, only create drafts; never send emails directly
+      description: "[Config] Draft-only mode — when enabled, emails are saved as drafts instead of being sent"
       default: true
       prompt: Enable draft-only mode for email safety?
 ---
@@ -88,7 +88,7 @@ Run all commands using `${OUTLOOK_CLI_PYTHON:-python}` (set only in WSL; falls b
 | Find emails | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" search [options]` |
 | Read email | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" read <id> --json` |
 | Send email | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" send --to X --subject Y --body Z` |
-| Reply | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" reply <id> --body "text"` |
+| Reply | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" reply <id> --body "text" [--all] [--cc X]` |
 | Forward | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" forward <id> --to X` |
 | Calendar | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" cal list/read/create/delete` |
 | Tasks | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" tasks list/read/create/complete/delete` |
@@ -140,6 +140,63 @@ To view all known people:
 ```bash
 python outlook.py people list [--json]
 ```
+
+## Common Patterns
+
+These cover 80% of agent tasks without needing extra reference files.
+
+### Quick inbox scan
+```bash
+# First N unread, last day only (fast on large inboxes)
+python outlook.py search --unread --days 1 --limit 10 --json
+```
+
+### Find emails from someone
+```bash
+python outlook.py search --filter-email "alice@co.com" --days 7 --json
+```
+
+### Reply with extra CC
+```bash
+python outlook.py reply <id> --body "My reply" --cc "newcomer@co.com,support@co.com"
+```
+
+### Export thread to markdown
+```bash
+python outlook.py export --output ./inbox-export --filter-email "client@co.com" --days 7
+```
+
+### Calendar today
+```bash
+python outlook.py cal list --json
+```
+
+### Multi-account: always discover folders first
+```bash
+# See what accounts are connected
+python outlook.py folders
+# Then target a specific account
+python outlook.py search --folder "work@domain.com/Inbox" --filter-email "sender@co.com"
+```
+
+### Date filtering options
+- `--days N` — last N days (default 7)
+- `--from-date YYYY-MM-DD --to-date YYYY-MM-DD` — exact range (overrides --days)
+- `--limit N` — stop after N matches (for huge inboxes)
+
+## Known Pitfalls
+
+### Large inbox search can be slow
+COM iterates every item in the folder. On 1000+ emails, narrow with `--days 1` or `--limit 20`. The CLI now shows a progress indicator in non-JSON mode.
+
+### Multi-account: search defaults to primary account
+Search/send/export target the default account. Run `folders` first to see what's connected, then use `--folder "AccountName/Inbox"` to reach another account.
+
+### EntryIDs can change when emails move
+If a stored message ID fails to load, re-search to get the current ID — Outlook regenerates EntryIDs on move/archive operations.
+
+### Draft-only is the default
+All compose commands create drafts. Direct sending requires both `send_mode: send` in config AND the `--send` flag.
 
 ## Safety Rules
 

@@ -22,6 +22,7 @@ python "${SKILL_DIR}/outlook.py" search [options]
 | `--filter-email ADDRESS` | Filter by email address (can specify multiple) |
 | `--filter-domain DOMAIN` | Filter by domain (can specify multiple) |
 | `--keyword TEXT` | Search in subject/body |
+| `--limit N` | Stop after N matching emails (for large inboxes) |
 | `--export DIR` | Also export results to markdown |
 | `--no-view` | Skip terminal display |
 | `--json` | Output as JSON |
@@ -66,6 +67,8 @@ python outlook.py reply <message-id> --body TEXT [options]
 |--------|-------------|
 | `--body TEXT` | Reply message (required) |
 | `--all` | Reply to all recipients |
+| `--cc ADDRESS` | Additional CC recipients (comma-separated) |
+| `--bcc ADDRESS` | Additional BCC recipients (comma-separated) |
 | `--attach PATH` | Add attachment (can specify multiple) |
 | `--html` | Body is HTML |
 | `--send` | Send immediately (requires `send_mode: send` in config) |

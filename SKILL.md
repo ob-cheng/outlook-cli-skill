@@ -1,7 +1,7 @@
 ---
 name: outlook-cli
 description: "Outlook email, calendar, tasks, and notes via CLI. Use when: checking inbox, finding/sending/replying emails, scheduling meetings, checking calendar, managing tasks/notes, exporting emails to markdown/JSON for AI processing. Supports --stdout for direct JSON output to AI agents. Windows-only (COM automation)."
-version: 0.3.1
+version: 0.4.0
 author: ob-cheng
 license: MIT
 # Platform restriction removed — the skill's description communicates the real requirement (Windows+COM).
@@ -53,6 +53,7 @@ references:
   - docs/structure.md
   - references/config.md
   - references/agent-ergonomics.md
+  - references/performance.md
   # - testing.md omitted — dev-only, not user-facing
 # Hermes-specific config (other agents use instructions in Safety Rules section)
 metadata.hermes:
@@ -77,12 +78,18 @@ Always add `--json` for structured output when processing programmatically.
 
 ## Updating This Skill
 
-When the user asks to update the skill, or when a new version is available:
+There are **two repos** — don't confuse them:
+
+| Repo | Purpose | Location |
+|------|---------|----------|
+| **outlook-cli-skill** | Hermes skill wrapper (this file) | `~/.hermes/skills/email/outlook-cli-skill` — `github.com/ob-cheng/outlook-cli-skill` |
+| **outlook-cli-2.0** | The actual CLI tool binary | `/mnt/c/Users/its_t/AppData/Local/outlook-cli-2.0` — `github.com/ob-cheng/outlook-cli-2.0` |
+
+**To update the Hermes skill** (this SKILL.md + reference files):
 
 ```bash
-cd /mnt/c/Users/its_t/AppData/Local/outlook-cli-2.0
+cd ~/.hermes/skills/email/outlook-cli-skill
 git pull
-pip install -r requirements.txt  # OK on native Windows; may need a venv on WSL
 ```
 
 If `git pull` fails due to local modifications:
@@ -90,12 +97,20 @@ If `git pull` fails due to local modifications:
 git stash && git pull && git stash pop
 ```
 
-**Verify the update** — no test scripts needed:
+If `git stash pop` produces merge conflicts, resolve them manually — edit the conflicted file, remove conflict markers, `git add` it.
+
+> **CRITICAL:** Never `git commit --amend` after a commit has been pushed. It rewrites history and diverges from origin. Always create a new fix commit instead.
+
+**To update the CLI tool** (only needed when new features were released):
+
 ```bash
+cd /mnt/c/Users/its_t/AppData/Local/outlook-cli-2.0
+git pull
+pip install -r requirements.txt
 python outlook.py --help > /dev/null && echo "CLI OK"
 ```
 
-Configuration (`~/.outlook-cli/`) lives outside the repo — updates never touch settings or people data.
+Configuration (`~/.outlook-cli/`) lives outside both repos — updates never touch settings or people data.
 
 > **WSL / non-Windows setup:** See [docs/wsl.md](docs/wsl.md) for the `OUTLOOK_CLI_PYTHON` workaround.
 >
@@ -118,9 +133,10 @@ Run all commands using `${OUTLOOK_CLI_PYTHON:-python}` (set only in WSL; falls b
 | Tasks | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" tasks list/read/create/complete/delete` |
 | Notes | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" notes list/read/create/delete` |
 | Export | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" export --output DIR [--format json] [--batch] [--stdout]` |
-| Folders | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" folders` |
+| Folders | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" folders [--json] [--refresh]` |
 | People | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" people list/lookup/add` |
 | Config | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" config show/set/clear` |
+| Batch | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" batch --commands '[...]'` |
 
 ## Draft Workflow
 
@@ -229,11 +245,25 @@ python outlook.py cal list --json
 
 ### Multi-account: always discover folders first
 ```bash
-# See what accounts are connected
+# See what accounts are connected (cached after first run — instant thereafter)
 python outlook.py folders
+# Force a full refresh if you've added/removed accounts
+python outlook.py folders --refresh
 # Then target a specific account
 python outlook.py search --folder "work@domain.com/Inbox" --filter-email "sender@co.com"
 ```
+
+### Batch mode (multi-command single process)
+```bash
+# Run multiple commands in one Python process — avoids 0.34s cold-start per extra command.
+# Each inner array is [command, ...args]. Output is a JSON envelope with per-command results.
+python outlook.py batch --commands '[
+  ["search", "--unread", "--days", "1", "--limit", "5", "--json"],
+  ["tasks", "list", "--json"],
+  ["cal", "list", "--json"]
+]'
+```
+Prefer batch when you know the full command pipeline upfront (e.g., search → read → reply). Saves ~40% on 3-command workflows vs. separate invocations.
 
 ### Date filtering options
 - `--days N` — last N days (default 7)
@@ -244,6 +274,18 @@ python outlook.py search --folder "work@domain.com/Inbox" --filter-email "sender
 
 ### Large inbox search can be slow
 COM iterates every item in the folder. On 1000+ emails, narrow with `--days 1` or `--limit 20`. The CLI now shows a progress indicator in non-JSON mode.
+
+### Per-command cold-start (~0.5s) and what's fast/slow
+
+Every CLI invocation pays ~0.5s overhead (Python import: 0.34s + COM Dispatch: 0.22s). Three optimizations are baked in to reduce this and the larger COM data-iteration bottlenecks:
+
+- **Folder cache** (`~/.outlook-cli/folder-cache.json`): First `folders` call walks all stores (16-35s). Subsequent calls return from cache instantly (0.45s). Invalidates automatically when store topology changes. `--refresh` forces a full re-walk.
+- **Calendar/tasks summary mode**: `cal list` and `tasks list` skip expensive COM properties (body, attendees, recurrence details) automatically. `cal list`: 6s → 0.73s. `cal read` still returns full detail.
+- **Batch mode**: Run multiple commands in one Python process. Cuts the 0.5s per-extra-command cold start. 3-command workflows run ~40% faster. Prefer batch when you know the full pipeline upfront (e.g., search → read → reply).
+
+### cal create always uses the default delivery store in multi-account profiles
+
+`cal create` calls `outlook.CreateItem(1)` which saves to Outlook's **default delivery store** — not necessarily the account the user considers primary. The default send account and default delivery store are separate concepts in COM. No `--store` flag exists yet. See `references/features.md` for workaround. Tracked: `ob-cheng/outlook-cli-2.0` #2.
 
 ### Multi-account: search defaults to primary account
 Search/send/export target the default account. Run `folders` first to see what's connected, then use `--folder "AccountName/Inbox"` to reach another account.
@@ -256,6 +298,20 @@ All compose commands create drafts. Direct sending requires both `send_mode: sen
 
 ### git stash pop can produce merge conflicts
 If both your local modifications AND the upstream changed the same files (common for SKILL.md during feature updates), `git stash pop` after `git pull` will produce conflicts. Resolve them manually (edit conflicted file, remove markers, `git add` it) instead of trying to force through.
+
+### Windows Python missing dependencies (first WSL setup)
+First run from WSL often fails because the Windows Python doesn't have the tool's dependencies installed (`rich`, `markdownify`, `beautifulsoup4`, `pywin32`). The auto-detection finds the Python binary fine, then crashes with `ModuleNotFoundError`. Fix — install deps via the Windows Python that `OUTLOOK_CLI_PYTHON` points to:
+
+```bash
+"${OUTLOOK_CLI_PYTHON}" -m pip install -r "${SKILL_DIR}/requirements.txt"
+```
+
+For example, if auto-detected Python313:
+```bash
+"/mnt/c/Users/its_t/AppData/Local/Programs/Python/Python313/python.exe" -m pip install rich markdownify beautifulsoup4 pywin32
+```
+
+This is a one-time setup step. After install, all commands work.
 
 ### Testing from WSL (no Outlook COM) — developers only
 When making code changes from WSL, COM won't work. The `tests/` directory has pytest suites that run without COM. See `references/testing.md` in the repo for mock patterns and CI setup.

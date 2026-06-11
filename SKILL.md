@@ -167,6 +167,25 @@ python outlook.py search --folder "work@domain.com/Inbox" --days 7 --filter-doma
 python outlook.py reply <id> --body "My reply" --cc "newcomer@co.com,support@co.com"
 ```
 
+### Reply all vs. reply
+Use `--all` judiciously — the default reply goes only to the sender, which can silently drop stakeholders from group threads.
+
+- **Use `--all`** for group discussions to keep all participants in the loop
+- **Use regular reply** when the response is only relevant to the sender
+- **When asking a specific person a question in a group thread**, still use `--all` to maintain transparency
+- **Exception:** sensitive or private matters should use regular reply
+
+```bash
+# Reply to sender only (default)
+python outlook.py reply <id> --body "Thanks, got it"
+
+# Reply to all participants
+python outlook.py reply <id> --body "Here's the update for everyone" --all
+
+# Reply to all + extra recipients
+python outlook.py reply <id> --body "Adding legal to the loop" --all --cc "legal@co.com"
+```
+
 ### Export to markdown or JSON
 ```bash
 # Markdown files

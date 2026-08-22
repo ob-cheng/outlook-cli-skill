@@ -95,6 +95,8 @@ Run all commands using `${OUTLOOK_CLI_PYTHON:-python}` (set only in WSL; falls b
 | Config | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" config show/set/clear` |
 | Batch | `${OUTLOOK_CLI_PYTHON:-python} "${SKILL_DIR}/outlook.py" batch --commands '[...]'` |
 
+**Shorthand:** message IDs are long — after a `search`, `read`/`reply`/`forward` accept `--last [N]` to target the Nth result from that search (default 1 = most recent), so you rarely need to copy an ID. Use `--filter-name "Name"` to find mail when you only know the sender's display name, not their address.
+
 ## Draft Workflow
 
 Before every send/reply/forward:
@@ -153,13 +155,13 @@ python outlook.py search --filter-email "alice@co.com" --days 7 --json
 
 ### Find emails by name (unknown email)
 ```bash
-# --filter-email matches SMTP addresses only. When you only know the name:
-# Step 1: discover accounts
-python outlook.py folders --json
-# Step 2: search broadly in the right account's inbox, then inspect sender_clean
+# --filter-email matches SMTP addresses only. When you only know the name,
+# use --filter-name (substring match on the sender display name):
+python outlook.py search --filter-name "Babu" --days 7 --json
+# Ambiguous name? Narrow by organization domain:
+python outlook.py search --filter-domain "alcon.com" --days 7 --json
+# Last resort: scan a specific account's inbox and inspect sender_clean:
 python outlook.py search --folder "work@domain.com/Inbox" --days 7 --json
-# Step 3: or narrow by domain when you know the organization
-python outlook.py search --folder "work@domain.com/Inbox" --days 7 --filter-domain "alcon.com" --json
 ```
 
 ### Reply with extra CC

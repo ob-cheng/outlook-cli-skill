@@ -65,7 +65,7 @@ export OUTLOOK_CLI_PYTHON="/mnt/c/Users/your-username/AppData/Local/Programs/Pyt
 
 ```bash
 "${OUTLOOK_CLI_PYTHON:-python}" "${SKILL_DIR}/outlook.py" --version
-# Expected: outlook 0.2.0
+# Expected: outlook 0.4.0
 ```
 
 ## Known-good config (this machine)

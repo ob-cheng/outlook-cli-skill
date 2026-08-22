@@ -9,7 +9,7 @@ Instructions for AI agents. When the user asks to install this skill, follow the
 | Agent | Clone target | Notes |
 |---|---|---|
 | **Hermes Agent** | `~/.hermes/skills/outlook-cli-skill` | Auto-discovered on next session |
-| **Claude Code** | `<skills-dir>/outlook-cli-skill` | Add `"skills": ["outlook-cli-skill"]` to `.claude/settings.json` |
+| **Claude Code** | `.claude/skills/outlook-cli-skill` (project) or `~/.claude/skills/outlook-cli-skill` (user) | Auto-discovered — no settings.json edit needed |
 | **OpenClaw** | Anywhere | Point skill search path to parent dir |
 | **Other** | Anywhere | Point your agent's skill directory to the parent |
 
@@ -17,7 +17,10 @@ Instructions for AI agents. When the user asks to install this skill, follow the
 # Hermes Agent
 git clone https://github.com/ob-cheng/outlook-cli-skill.git ~/.hermes/skills/outlook-cli-skill
 
-# Claude Code / OpenClaw / other
+# Claude Code (project-level)
+git clone https://github.com/ob-cheng/outlook-cli-skill.git .claude/skills/outlook-cli-skill
+
+# OpenClaw / other
 git clone https://github.com/ob-cheng/outlook-cli-skill.git
 ```
 
@@ -37,7 +40,7 @@ pip install -r outlook-cli-skill/requirements.txt
 
 ```bash
 python "${SKILL_DIR}/outlook.py" --version
-# Expected: outlook 0.2.0
+# Expected: outlook 0.4.0
 ```
 
 ### 4. Verify Outlook connectivity (optional — only if user wants to test now)

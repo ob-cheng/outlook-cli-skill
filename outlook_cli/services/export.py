@@ -1,6 +1,7 @@
 """Markdown export service."""
 
 import re
+import sys
 import json
 import hashlib
 from pathlib import Path
@@ -490,7 +491,20 @@ class ExportService:
             for blockquote in soup.find_all('blockquote'):
                 blockquote.decompose()
 
-            content = md(str(soup), heading_style="ATX")
+            # markdownify walks the DOM via mutual recursion, so deeply-nested
+            # Outlook HTML (stacked tables/divs) blows past CPython's default
+            # 1000-frame limit and RecursionError would abort the whole export.
+            # Give it headroom, and fall back to plain text if even that isn't
+            # enough — degrade one email instead of killing the batch.
+            # ponytail: 10000-frame ceiling; realistic Outlook nesting needs ~1-2k.
+            old_limit = sys.getrecursionlimit()
+            sys.setrecursionlimit(max(old_limit, 10000))
+            try:
+                content = md(str(soup), heading_style="ATX")
+            except RecursionError:
+                return (email.text_body or "").strip()
+            finally:
+                sys.setrecursionlimit(old_limit)
 
             # Strip quoted content
             patterns = [

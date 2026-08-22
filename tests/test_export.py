@@ -4,6 +4,7 @@ Uses temporary directories and mock Email objects.
 """
 
 import json
+import sys
 import pytest
 from datetime import datetime
 from pathlib import Path
@@ -363,6 +364,48 @@ class TestExportServiceContentExtraction:
 
         assert "CAUTION" not in cleaned
         assert "Actual content" in cleaned
+
+    def test_extract_deeply_nested_html_does_not_crash(self, tmp_path):
+        """Deeply-nested HTML must not exceed the recursion limit and abort export.
+
+        markdownify recurses one frame per nesting level. Outlook emails with
+        stacked tables/divs can nest deeper than CPython's default 1000-frame
+        limit; before the fix this raised RecursionError and killed the whole
+        export. 1500 levels reliably exceeds the default limit.
+        """
+        depth = 1500
+        html = "<div>" * depth + "DEEPCONTENTMARKER" + "</div>" * depth
+        svc = ExportService(tmp_path)
+        email = make_test_email(html_body=html, text_body="fallback text")
+
+        content = svc._extract_content(email)
+
+        assert "DEEPCONTENTMARKER" in content
+        # Limit must be restored to the default after extraction.
+        assert sys.getrecursionlimit() == 1000
+
+    def test_extract_content_falls_back_to_text_on_recursion_error(self, tmp_path, monkeypatch):
+        """If markdownify still overflows, degrade to plain text — don't crash.
+
+        Simulates a pathologically-nested email that overflows even the raised
+        limit by forcing markdownify to raise RecursionError.
+        """
+        import outlook_cli.services.export as export_mod
+
+        def boom(*args, **kwargs):
+            raise RecursionError("simulated deep nesting")
+
+        monkeypatch.setattr(export_mod, "md", boom)
+        svc = ExportService(tmp_path)
+        email = make_test_email(
+            html_body="<p>ignored because md raises</p>",
+            text_body="Fallback plain text",
+        )
+
+        content = svc._extract_content(email)
+
+        assert content == "Fallback plain text"
+        assert sys.getrecursionlimit() == 1000
 
 
 class TestExportServiceMarkdownGeneration:

@@ -5,7 +5,6 @@ import sys
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
-from rich.text import Text
 from rich import box
 
 from ..core.models import Email
@@ -38,12 +37,9 @@ class ViewerService:
         for f in folders:
             indent = "  " * f['level']
             name = f['name'].encode('ascii', 'replace').decode()
-            count = f.get('count', 0)
 
             if f.get('is_store'):
                 self.console.print(f"{indent}[bold cyan]{name}[/bold cyan] [dim](Account)[/dim]")
-            elif count > 0:
-                self.console.print(f"{indent}{name} [dim]({count} items)[/dim]")
             else:
                 self.console.print(f"{indent}[dim]{name}[/dim]")
 

@@ -5,7 +5,7 @@ def connect_to_outlook():
     """Establish connection to Outlook via COM.
 
     Returns:
-        tuple: (outlook_app, mapi_namespace)
+        The MAPI namespace (get the Application object via namespace.Application).
 
     Raises:
         ImportError: If pywin32 is not installed.
@@ -15,8 +15,7 @@ def connect_to_outlook():
 
     try:
         outlook = win32.Dispatch('Outlook.Application')
-        namespace = outlook.GetNamespace("MAPI")
-        return outlook, namespace
+        return outlook.GetNamespace("MAPI")
     except Exception as e:
         raise RuntimeError(
             f"Failed to connect to Outlook: {e}\n"

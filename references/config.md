@@ -61,6 +61,18 @@ When `humanizer_enabled` is `true`, the agent loads the [humanizer skill](https:
 
 If the humanizer skill is not installed in the agent's environment, the agent asks the user whether to install it. If declined, the draft is saved as-is with a note that humanization was skipped.
 
+### The `--humanized` gate
+
+The humanizer is a reasoning transform — there is no script to run it, and the CLI can't verify whether a body reads as human. So the CLI enforces the *protocol*, not the prose: when `humanizer_enabled` is on, `send`/`reply`/`forward` **fail** unless `--humanized` is passed.
+
+```bash
+# humanizer_enabled = true
+python outlook.py send --to x@co.com --subject Hi --body "..."              # ✗ humanizer_required
+python outlook.py send --to x@co.com --subject Hi --body "..." --humanized  # ✓ proceeds
+```
+
+The error (`code: "humanizer_required"` in `--json`) converts a silent skip into a loud, logged failure. `--humanized` is an assertion the step ran, not verification that it did — an agent could pass it dishonestly, but it can no longer skip the step *silently*. Applies to draft and direct-send alike, and to each `send`/`reply`/`forward` inside `batch`.
+
 ## Status Tags
 
 On every send/reply/forward, the CLI prints status tags to stdout showing what's active:
@@ -72,6 +84,8 @@ On every send/reply/forward, the CLI prints status tags to stdout showing what's
 ```
 
 The agent sees these tags in the command output. If a setting is expected but no tag appears, the agent skipped a step.
+
+With `--json`, the same tags are returned as a `status_tags` array in the success payload (the human-readable lines above are suppressed in JSON mode), so the audit signal survives the programmatic path.
 
 ## First-Time Setup
 

@@ -2,7 +2,6 @@
 
 from .formatting import (
     extract_email_address,
-    extract_all_email_addresses,
     extract_display_name,
     get_smtp_address,
     get_sender_smtp_address,
@@ -15,7 +14,6 @@ from .formatting import (
 
 __all__ = [
     'extract_email_address',
-    'extract_all_email_addresses',
     'extract_display_name',
     'get_smtp_address',
     'get_sender_smtp_address',

@@ -12,14 +12,6 @@ def extract_email_address(full_address: str) -> str | None:
     return match.group(0).lower() if match else None
 
 
-def extract_all_email_addresses(field_string: str) -> list[str]:
-    """Extract all email addresses from a To/CC field string."""
-    if not field_string:
-        return []
-    matches = re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', str(field_string))
-    return [m.lower() for m in matches]
-
-
 def extract_display_name(full_address: str) -> str | None:
     """Extract display name from address, cleaning up Exchange paths."""
     if not full_address:

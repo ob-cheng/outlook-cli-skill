@@ -201,38 +201,3 @@ class ComposeService:
 
         except Exception as e:
             return False, f"Failed to forward: {e}"
-
-    def create_draft(
-        self,
-        to: list[str] | None = None,
-        subject: str = "",
-        body: str = "",
-        cc: list[str] | None = None,
-        bcc: list[str] | None = None,
-        attachments: list[str | Path] | None = None,
-        html: bool = False,
-    ) -> tuple[bool, str]:
-        """Create a draft email without sending.
-
-        Args:
-            to: List of recipient email addresses
-            subject: Email subject
-            body: Email body
-            cc: List of CC email addresses
-            bcc: List of BCC email addresses
-            attachments: List of file paths to attach
-            html: If True, body is HTML; otherwise plain text
-
-        Returns:
-            tuple: (success: bool, message_id_or_error: str)
-        """
-        return self.send_email(
-            to=to or [],
-            subject=subject,
-            body=body,
-            cc=cc,
-            bcc=bcc,
-            attachments=attachments,
-            html=html,
-            send_immediately=False,
-        )

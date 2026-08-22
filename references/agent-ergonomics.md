@@ -1,36 +1,59 @@
-# Agent Ergonomics — known gaps & workarounds
+# Agent Ergonomics — efficient paths & known gaps
 
-File issues for these at https://github.com/ob-cheng/outlook-cli-skill
+Tips for driving the CLI efficiently as an agent. File issues at
+https://github.com/ob-cheng/outlook-cli-skill
 
-## 1. Search by sender display name (`--filter-name` missing)
+## 1. Search by sender display name — use `--filter-name`
 
-**Issue:** [#4](https://github.com/ob-cheng/outlook-cli-skill/issues/4)
+When the user names someone but you don't know their SMTP address ("the email
+from Babu"), `--filter-email "Babu"` returns nothing — it matches addresses only.
+Use `--filter-name` instead (substring match on the sender display name, repeatable):
 
-`--filter-email` matches SMTP addresses only. If the user says "the email from Babu" and you don't know `babu.ningappa@alcon.com`, `--filter-email "Babu"` returns nothing.
+```bash
+python outlook.py search --filter-name "Babu" --days 7 --json
+```
 
-**Workaround:** Use `--folder "AccountName/Inbox" --days N` to scan the right account broadly, then inspect sender_clean in results. Or use `--filter-domain "alcon.com"` to narrow by domain when you know the org.
+Fallbacks if the name is ambiguous: `--filter-domain "alcon.com"` to narrow by
+org, or scan a specific account with `--folder "Account/Inbox" --days N` and
+inspect `sender_clean` in the results.
 
-## 2. Read returns full HTML body (token-heavy)
+## 2. Long email bodies — use `--text-only` and `--max-body-lines`
 
-**Issue:** [#5](https://github.com/ob-cheng/outlook-cli-skill/issues/5)
+A single `read` on a threaded email can return 50K+ chars of HTML. Don't pay for
+that when you only need the text:
 
-Single `read` on a threaded email can return 50K+ chars of HTML. The `text_body` field is included but mixed with the full HTML version.
+```bash
+# Plain text only (omits html_body entirely)
+python outlook.py read <id> --text-only --json
+# Cap the body length on long threads
+python outlook.py read <id> --text-only --max-body-lines 40 --json
+```
 
-**Workaround:** Parse `text_body` from the JSON output — it's the plain-text version. For long threads, the token cost is unavoidable since the CLI returns the full email object. Consider piping through `jq .text_body` if you only need the text.
+Parse `text_body` from the JSON. Only reach for the full `html_body` when you
+actually need markup.
 
-## 3. Message IDs are 100+ hex chars, no shorthand
+## 3. Message IDs are long — use `--last` instead of copy-pasting
 
-**Issue:** [#6](https://github.com/ob-cheng/outlook-cli-skill/issues/6)
+Message IDs are 100+ hex chars. After a `search`, you don't need to copy them:
+`read`, `reply`, and `forward` accept `--last [N]`, which targets the Nth result
+from the most recent search (default 1 = most recent), backed by
+`~/.outlook-cli/` search caching.
 
-Every `reply` / `read` / `forward` requires copy-pasting a long message_id from search output.
+```bash
+python outlook.py search --unread --days 1 --json
+python outlook.py read --last --json          # most recent hit
+python outlook.py reply --last 2 --body "..." # 2nd hit from that search
+```
 
-**Workaround:** Keep the message_id string in your active context. Search results return IDs in the `message_id` field of each email object. When a row was just found, the ID is in the prior terminal output — pipe search into `--json` and reference the field.
+When you do have explicit IDs (e.g. reading several at once), pass them
+positionally: `read <id1> <id2> <id3> --json`.
 
 ## 4. WSL: `OUTLOOK_CLI_PYTHON` must be set manually
 
 **Issue:** [#7](https://github.com/ob-cheng/outlook-cli-skill/issues/7)
 
-On WSL, every command needs the Windows Python path. Without the env var set, `python outlook.py` runs WSL's Python which lacks `win32com`.
+On WSL, every command needs the Windows Python path. Without the env var set,
+`python outlook.py` runs WSL's Python which lacks `win32com`.
 
 **Workaround (current):** Override per-command with:
 ```bash
@@ -38,11 +61,11 @@ On WSL, every command needs the Windows Python path. Without the env var set, `p
 ```
 Or set env per shell session:
 ```bash
-export OUTLOOK_CLI_PYTHON="/mnt/c/Users/its_t/AppData/Local/Programs/Python/Python312/python.exe"
+export OUTLOOK_CLI_PYTHON="/mnt/c/Users/<you>/AppData/Local/Programs/Python/Python312/python.exe"
 ```
 
 **Proper fix:** Add to `~/.hermes/config.yaml`:
 ```yaml
 env:
-  OUTLOOK_CLI_PYTHON: "/mnt/c/Users/its_t/AppData/Local/Programs/Python/Python312/python.exe"
+  OUTLOOK_CLI_PYTHON: "/mnt/c/Users/<you>/AppData/Local/Programs/Python/Python312/python.exe"
 ```

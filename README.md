@@ -1,4 +1,5 @@
-[![Version](https://img.shields.io/badge/version-0.3.1-blue?style=flat-square)](https://github.com/ob-cheng/outlook-cli-skill)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue?style=flat-square)](https://github.com/ob-cheng/outlook-cli-skill)
+[![Tests](https://github.com/ob-cheng/outlook-cli-skill/actions/workflows/tests.yml/badge.svg)](https://github.com/ob-cheng/outlook-cli-skill/actions/workflows/tests.yml)
 [![License](https://img.shields.io/badge/license-MIT-success?style=flat-square)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-informational?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
 [![Platform](https://img.shields.io/badge/platform-windows%20%7C%20wsl-lightgrey?style=flat-square)]()
@@ -46,7 +47,7 @@ pip install -r outlook-cli-skill/requirements.txt
 
 # Verify
 python outlook-cli-skill/outlook.py --version
-# → outlook 0.3.1
+# → outlook 0.4.0
 ```
 <br>
 <blockquote><b>Copy-paste this to your AI agent:</b><br>
@@ -122,7 +123,7 @@ This repo follows the [Agent Skills Spec](https://agentskills.io). When loaded b
 | **[references/config.md](references/config.md)** | Draft instructions, humanizer, send mode settings |
 | **[references/workflows.md](references/workflows.md)** | Common email, calendar, and task workflows |
 | **[references/features.md](references/features.md)** | Internal behavior, edge cases, export lifecycle |
-| _(developer docs: see `docs/developers.md` in the repo)_ | Testing patterns, mock setup, pytest |
+| **[references/testing.md](references/testing.md)** | Testing patterns, mock setup, pytest (COM-free) |
 | **[references/troubleshooting.md](references/troubleshooting.md)** | Debugging when commands fail |
 | **[references/direct-send.md](references/direct-send.md)** | Direct send mode setup and behavior |
 | **[docs/install.md](docs/install.md)** | Installation across all platforms |

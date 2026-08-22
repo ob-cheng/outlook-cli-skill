@@ -179,4 +179,4 @@ git stash && git pull && git stash pop
 - [README.md](../README.md) — human-facing overview
 - [references/commands.md](../references/commands.md) — full command reference
 - [references/troubleshooting.md](../references/troubleshooting.md) — common issues
-- [references/wsl.md](../references/wsl.md) — WSL setup guide
+- [docs/wsl.md](wsl.md) — WSL setup guide

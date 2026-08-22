@@ -12,7 +12,8 @@ If no `--folder` specified: **Inbox + Sent Items** only.
 ### Filter logic
 - `--filter-email` matches From, To, and CC
 - `--filter-domain` matches email domain portion
-- Filters are additive: with both set, an email must match at least one
+- `--filter-name` matches the sender display name (substring, case-insensitive) — use when you know the name but not the address
+- Filters are additive: with several set, an email must match at least one
 - `--keyword` does whole-word regex search on subject + text body (case-insensitive)
 
 ### Mass distribution guard
@@ -149,7 +150,7 @@ appt.Save()
 Sets status to `completed` and percent complete to 100.
 
 ### Filters
-`--status`, `--all` (include completed), `--due-before`/`--due-after`, `--priority`
+`--status`, `--all` (include completed), `--due-before`/`--due-after`, `--priority`, `--category`
 
 ---
 
@@ -157,7 +158,7 @@ Sets status to `completed` and percent complete to 100.
 
 - Required: `--body`
 - Optional: `--color` (blue/green/pink/yellow/white, default yellow), `--category`
-- Filters: `--color`, `--category`, `--keyword`
+- Filters: `--color`, `--category`, `--keyword`, `--limit`
 
 ---
 

@@ -4,6 +4,8 @@ Complete reference for all outlook-cli commands and options.
 
 All commands use `${SKILL_DIR}/outlook.py` as the entry point.
 
+**Short forms** (long forms shown in the tables below are recommended for clarity): `-F` = `--folder`, `-d` = `--days`, `-u` = `--unread`, `-f` = `--filter-email`, `-D` = `--filter-domain`, `-k` = `--keyword`, `-N` = `--limit`, `-e` = `--export`, `-o` = `--output`, `-t` = `--to`, `-s` = `--subject`, `-b` = `--body`, `-a` = `--attach`. `--filter-name` has no short form.
+
 ## Email Commands
 
 ### search - Find emails
@@ -116,10 +118,15 @@ python outlook.py export --output DIR [options]
 |--------|-------------|
 | `--output DIR` | Output directory (required, use `.` with --stdout) |
 | `--days N` | Days to look back (default: 7) |
+| `--from-date DATE` | Start date (YYYY-MM-DD), overrides --days |
+| `--to-date DATE` | End date (YYYY-MM-DD) |
 | `--folder NAME` | Folder to export (can specify multiple) |
-| `--filter-email ADDRESS` | Filter by participant |
-| `--filter-domain DOMAIN` | Filter by domain |
+| `--unread` | Only unread messages |
+| `--filter-email ADDRESS` | Filter by participant (can specify multiple) |
+| `--filter-domain DOMAIN` | Filter by domain (can specify multiple) |
+| `--filter-name NAME` | Filter by sender display name (substring match, can specify multiple) |
 | `--keyword TEXT` | Filter by keyword |
+| `--limit N` | Stop after N matching emails |
 | `--format FORMAT` | Output format: `markdown` (default) or `json` |
 | `--batch` | For JSON: combine all emails into single file |
 | `--stdout` | Output JSON to terminal (no files written) |
@@ -131,8 +138,13 @@ python outlook.py export --output DIR [options]
 ### folders - List all folders
 
 ```bash
-python outlook.py folders [--json]
+python outlook.py folders [--json] [--refresh]
 ```
+
+| Option | Description |
+|--------|-------------|
+| `--json` | Output as JSON |
+| `--refresh` | Force a full COM re-walk of all stores (otherwise served from `~/.outlook-cli/folder-cache.json`) |
 
 ---
 

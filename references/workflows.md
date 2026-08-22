@@ -244,8 +244,8 @@ python "${SKILL_DIR}/outlook.py" search --unread --json | jq '.count'
 # 2. Get summaries for triage
 python "${SKILL_DIR}/outlook.py" search --unread --json | jq '.emails[] | {subject, sender, date}'
 
-# 3. Read specific email for AI processing
-python "${SKILL_DIR}/outlook.py" read <message-id> --json | jq '.emails[0].body'
+# 3. Read specific email for AI processing (read output uses text_body/html_body)
+python "${SKILL_DIR}/outlook.py" read <message-id> --text-only --json | jq '.emails[0].text_body'
 ```
 
 ### Calendar + Task Integration
@@ -256,8 +256,9 @@ Prepare for meetings by checking related tasks:
 # 1. Get today's meetings
 python "${SKILL_DIR}/outlook.py" cal list --json
 
-# 2. For each meeting, check related tasks
-python "${SKILL_DIR}/outlook.py" tasks list --keyword "Project X" --json
+# 2. For each meeting, check related tasks (tasks list has no keyword search;
+#    filter by category, or list all and match client-side)
+python "${SKILL_DIR}/outlook.py" tasks list --category "Project X" --json
 ```
 
 ---
@@ -286,8 +287,8 @@ python "${SKILL_DIR}/outlook.py" cal read <event-id> --json
 # 2. Find related emails from attendees
 python "${SKILL_DIR}/outlook.py" search --filter-email attendee@co.com --days 14 --json
 
-# 3. Check related tasks
-python "${SKILL_DIR}/outlook.py" tasks list --keyword "meeting topic" --json
+# 3. Check related tasks (filter by category; tasks has no keyword search)
+python "${SKILL_DIR}/outlook.py" tasks list --category "meeting topic" --json
 
 # 4. Create prep task if needed
 python "${SKILL_DIR}/outlook.py" tasks create --subject "Prep for [meeting]" --due 2026-06-09

@@ -191,26 +191,23 @@ With `--no-threads`:
       "name": "user@example.com",
       "path": "user@example.com",
       "level": 0,
-      "count": 0,
       "is_store": true
     },
     {
       "name": "Inbox",
       "path": "user@example.com/Inbox",
-      "level": 1,
-      "count": 150
+      "level": 1
     },
     {
       "name": "Sent Items",
       "path": "user@example.com/Sent Items",
-      "level": 1,
-      "count": 500
+      "level": 1
     }
   ]
 }
 ```
 
-**Note:** `count` is the total item count in the folder (not unread count). Store-level entries have `is_store: true`.
+**Note:** Store-level entries (mailboxes) have `is_store: true`; `level` is the nesting depth (0 = store root). Item counts are not included.
 
 ---
 

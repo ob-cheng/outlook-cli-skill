@@ -160,28 +160,28 @@ def mock_namespace():
 - **Branch Coverage**: ≥75%
 - **Critical Paths**: 100% (compose, search, export)
 
-## Test Suite Summary (2026-06-10)
+## Test Suite Summary (2026-08-22)
 
-**Total Tests: 344 (all passing)**
+**Total Tests: 348 (all passing)**
 
 | Test File | Test Count | Coverage |
 |-----------|------------|----------|
-| test_config.py | 24 | ConfigManager CRUD, status tags |
-| test_people.py | 19 | PeopleManager CRUD, lookup, bulk import |
-| test_formatting.py | 33 | Email parsing, date handling, sanitization |
-| test_models.py | 22 | Email dataclass, from_mail_item, to_dict |
-| test_calendar.py | 23 | CalendarEvent, CalendarService |
-| test_tasks.py | 26 | Task, TaskService |
-| test_notes.py | 25 | Note, NotesService |
-| test_export.py | 28 | ExportService, markdown/JSON export |
-| test_last_search.py | 14 | Search result caching |
-| test_wsl.py | 12 | WSL detection, Windows Python discovery |
-| test_skill_compliance.py | 20 | SKILL.md documented behaviors |
+| test_formatting.py | 50 | Email parsing, date handling, sanitization |
+| test_export.py | 35 | ExportService, markdown/JSON export |
+| test_notes.py | 30 | Note, NotesService |
+| test_skill_compliance.py | 29 | SKILL.md documented behaviors, version/schema drift guards |
+| test_tasks.py | 28 | Task, TaskService |
+| test_calendar.py | 25 | CalendarEvent, CalendarService |
+| test_models.py | 24 | Email dataclass, from_mail_item, to_dict |
+| test_config.py | 23 | ConfigManager CRUD, status tags |
+| test_people.py | 23 | PeopleManager CRUD, lookup, bulk import |
 | test_argparse.py | 20 | CLI argument parsing |
-| test_search.py | 9 | SearchService filtering, limits |
-| test_compose.py | 6 | CC/BCC parsing |
+| test_wsl.py | 15 | WSL detection, Windows Python discovery |
+| test_last_search.py | 14 | Search result caching |
+| test_search.py | 12 | SearchService filtering, limits |
 | test_folders.py | 7 | Folder traversal |
 | test_progress.py | 7 | Progress indicator |
+| test_compose.py | 6 | CC/BCC parsing |
 
 ### Key Testing Patterns
 

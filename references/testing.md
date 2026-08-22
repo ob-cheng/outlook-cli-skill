@@ -69,7 +69,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests/ -v
 ```
 
-All 52 tests should pass on Linux/WSL without pywin32 installed.
+All 348 tests should pass on Linux/WSL without pywin32 installed.
 
 ## Windows smoke test
 

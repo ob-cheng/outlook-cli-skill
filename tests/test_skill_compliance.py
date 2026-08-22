@@ -12,6 +12,9 @@ from pathlib import Path
 
 from outlook_cli.core.config import ConfigManager, DEFAULTS
 from outlook_cli.core.models import Email
+from outlook_cli import __version__
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 class TestDraftOnlyDefault:
@@ -457,3 +460,68 @@ class TestConfigShowBehavior:
         assert result["send_mode"] == "send"
         assert result["draft_instructions"] == "Be formal"
         assert result["humanizer_enabled"] is True
+
+
+class TestVersionConsistency:
+    """Guard: the version string must match across code and docs.
+
+    This exists because README once drifted to 0.3.1 while the code and
+    SKILL.md were at 0.4.0 — an agent reading `--version` got a different
+    answer than the skill card. Single source of truth: outlook_cli.__version__.
+    """
+
+    def test_skill_md_version_matches_code(self):
+        skill = (REPO_ROOT / "SKILL.md").read_text(encoding="utf-8")
+        assert f"version: {__version__}" in skill, (
+            f"SKILL.md version must be {__version__} (from __init__.py)"
+        )
+
+    def test_readme_version_matches_code(self):
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        # Shields.io badge, e.g. version-0.4.0-blue
+        assert f"version-{__version__}-" in readme, (
+            f"README badge must show {__version__}"
+        )
+        # Quick-start expected output line, e.g. "outlook 0.4.0"
+        assert f"outlook {__version__}" in readme, (
+            f"README quick-start must show 'outlook {__version__}'"
+        )
+
+
+class TestJsonSchemaConformance:
+    """Guard: documented JSON schemas must match what the code emits.
+
+    Covers the folders schema, which once documented a `count` field that
+    core.folders never produced.
+    """
+
+    def test_folders_output_has_no_count_field(self):
+        from outlook_cli.core.folders import list_all_folders
+
+        ns = MagicMock()
+        store = MagicMock()
+        store.Name = "user@example.com"
+        inbox = MagicMock()
+        inbox.Name = "Inbox"
+        inbox.Folders.Count = 0
+        store.Folders.Count = 1
+        store.Folders.Item.return_value = inbox
+        ns.Folders.Count = 1
+        ns.Folders.Item.return_value = store
+
+        folders = list_all_folders(ns, use_cache=False)
+
+        allowed = {"name", "path", "level", "is_store"}
+        assert folders, "expected at least the store + inbox entries"
+        for entry in folders:
+            assert set(entry).issubset(allowed), f"unexpected keys in {entry}"
+            assert "count" not in entry, "folders output must not include 'count'"
+
+    def test_folders_schema_doc_has_no_count(self):
+        schema = (REPO_ROOT / "references" / "json-schemas.md").read_text(encoding="utf-8")
+        # Isolate just the folders schema section (count is legitimate elsewhere,
+        # e.g. email/event counts in search and cal schemas).
+        folders_section = schema.split("### folders --json")[1].split("## Calendar Schemas")[0]
+        assert '"count"' not in folders_section, (
+            "folders schema in json-schemas.md must not document a 'count' field"
+        )

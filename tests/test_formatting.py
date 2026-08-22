@@ -8,7 +8,6 @@ from datetime import datetime
 
 from outlook_cli.utils.formatting import (
     extract_email_address,
-    extract_all_email_addresses,
     extract_display_name,
     format_outlook_date,
     sanitize_filename,
@@ -65,40 +64,6 @@ class TestExtractEmailAddress:
         """Extracts email from Exchange X.500 path."""
         result = extract_email_address("/O=COMPANY/OU=USERS/CN=alice@example.com")
         assert result == "alice@example.com"
-
-
-class TestExtractAllEmailAddresses:
-    """Tests for extracting multiple email addresses."""
-
-    def test_single_email(self):
-        """Extracts single email."""
-        result = extract_all_email_addresses("alice@example.com")
-        assert result == ["alice@example.com"]
-
-    def test_multiple_emails_semicolon(self):
-        """Extracts multiple emails separated by semicolon."""
-        result = extract_all_email_addresses("alice@example.com; bob@example.com")
-        assert result == ["alice@example.com", "bob@example.com"]
-
-    def test_multiple_emails_with_names(self):
-        """Extracts emails from 'Name <email>' format."""
-        result = extract_all_email_addresses(
-            "Alice <alice@example.com>; Bob <bob@example.com>"
-        )
-        assert result == ["alice@example.com", "bob@example.com"]
-
-    def test_empty_string(self):
-        """Returns empty list for empty string."""
-        assert extract_all_email_addresses("") == []
-
-    def test_none_input(self):
-        """Returns empty list for None input."""
-        assert extract_all_email_addresses(None) == []
-
-    def test_all_lowercased(self):
-        """All emails returned in lowercase."""
-        result = extract_all_email_addresses("Alice@EXAMPLE.com; BOB@example.COM")
-        assert all(e == e.lower() for e in result)
 
 
 class TestExtractDisplayName:

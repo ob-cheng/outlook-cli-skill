@@ -23,6 +23,27 @@ def _check_send_allowed() -> tuple[bool, str]:
         "Or remove --send flag to save as draft."
     )
 
+
+def _check_humanizer_ack(args, cfg=None) -> tuple[bool, str]:
+    """Gate compose on the humanizer step when humanizer_enabled is on.
+
+    Code can't verify prose quality, so this only checks the caller's
+    assertion — it turns a silent skip into an explicit, logged claim.
+    ponytail: assertion-only gate, not content verification.
+    """
+    from .core.config import ConfigManager
+    cfg = cfg or ConfigManager()
+    if not cfg.get('humanizer_enabled'):
+        return True, None
+    if getattr(args, 'humanized', False):
+        return True, None
+    return False, (
+        "humanizer_enabled is on but --humanized was not passed.\n"
+        "Load the 'humanizer' skill, rewrite the body against its checklist, "
+        "then re-run with --humanized to confirm.\n"
+        "See references/config.md."
+    )
+
 from . import __version__
 from .core.connection import connect_to_outlook
 from .services.search import SearchService
@@ -233,6 +254,11 @@ def create_parser() -> argparse.ArgumentParser:
         action='store_true',
         help='Send immediately (requires send_mode: send in config)',
     )
+    send_parser.add_argument(
+        '--humanized',
+        action='store_true',
+        help='Assert the body was humanized (required when humanizer_enabled is on)',
+    )
     send_parser.add_argument('--json', action='store_true', help='Output as JSON')
 
     # =========================================================================
@@ -294,6 +320,11 @@ def create_parser() -> argparse.ArgumentParser:
         action='store_true',
         help='Send immediately (requires send_mode: send in config)',
     )
+    reply_parser.add_argument(
+        '--humanized',
+        action='store_true',
+        help='Assert the body was humanized (required when humanizer_enabled is on)',
+    )
     reply_parser.add_argument('--json', action='store_true', help='Output as JSON')
 
     # =========================================================================
@@ -352,6 +383,11 @@ def create_parser() -> argparse.ArgumentParser:
         '--send',
         action='store_true',
         help='Send immediately (requires send_mode: send in config)',
+    )
+    forward_parser.add_argument(
+        '--humanized',
+        action='store_true',
+        help='Assert the body was humanized (required when humanizer_enabled is on)',
     )
     forward_parser.add_argument('--json', action='store_true', help='Output as JSON')
 
@@ -632,7 +668,7 @@ def cmd_folders(args) -> int:
 
     if not getattr(args, 'json', False):
         print("Connecting to Outlook...")
-    _, namespace = connect_to_outlook()
+    namespace = connect_to_outlook()
 
     # Handle --refresh: invalidate cache so the walk populates fresh data.
     # Pass use_cache=True — load will miss (cache deleted), walk runs, save writes.
@@ -657,7 +693,7 @@ def cmd_search(args) -> int:
 
     if not json_mode:
         print("Connecting to Outlook...")
-    _, namespace = connect_to_outlook()
+    namespace = connect_to_outlook()
 
     since_date, until_date = _get_date_range(args)
 
@@ -747,7 +783,7 @@ def cmd_export(args) -> int:
 
     if not quiet_mode:
         print("Connecting to Outlook...")
-    _, namespace = connect_to_outlook()
+    namespace = connect_to_outlook()
 
     # For incremental mode, check last run and override since_date
     from .services.export import ExportService
@@ -880,7 +916,7 @@ def cmd_read(args) -> int:
 
     if not json_mode:
         print("Connecting to Outlook...")
-    _, namespace = connect_to_outlook()
+    namespace = connect_to_outlook()
 
     search = SearchService(namespace)
 
@@ -944,6 +980,8 @@ def cmd_read(args) -> int:
 def cmd_send(args) -> int:
     """Handle 'send' command."""
     json_mode = getattr(args, 'json', False)
+    from .core.config import ConfigManager
+    status_tags = ConfigManager().status_tags()
 
     # Determine if we should send immediately
     send_immediately = False
@@ -957,12 +995,19 @@ def cmd_send(args) -> int:
             return 1
         send_immediately = True
 
+    allowed, error_msg = _check_humanizer_ack(args)
+    if not allowed:
+        if json_mode:
+            _output_json(_json_error(error_msg, "humanizer_required"))
+        else:
+            print(f"✗ {error_msg}")
+        return 1
+
     if not json_mode:
-        from .core.config import ConfigManager
-        for tag in ConfigManager().status_tags():
+        for tag in status_tags:
             print(tag)
         print("Connecting to Outlook...")
-    _, namespace = connect_to_outlook()
+    namespace = connect_to_outlook()
 
     # Parse recipients
     to = [e.strip() for e in args.to.split(',')]
@@ -984,7 +1029,7 @@ def cmd_send(args) -> int:
 
     if json_mode:
         if success:
-            _output_json(_json_success({"message": message, "draft": not send_immediately}))
+            _output_json(_json_success({"message": message, "draft": not send_immediately, "status_tags": status_tags}))
         else:
             _output_json(_json_error(message, "send_failed"))
         return 0 if success else 1
@@ -1001,6 +1046,8 @@ def cmd_reply(args) -> int:
     """Handle 'reply' command."""
     json_mode = getattr(args, 'json', False)
     last_n = getattr(args, 'last', None)
+    from .core.config import ConfigManager
+    status_tags = ConfigManager().status_tags()
 
     # Resolve message_id from --last or positional arg
     message_id = args.message_id
@@ -1039,12 +1086,19 @@ def cmd_reply(args) -> int:
             return 1
         send_immediately = True
 
+    allowed, error_msg = _check_humanizer_ack(args)
+    if not allowed:
+        if json_mode:
+            _output_json(_json_error(error_msg, "humanizer_required"))
+        else:
+            print(f"✗ {error_msg}")
+        return 1
+
     if not json_mode:
-        from .core.config import ConfigManager
-        for tag in ConfigManager().status_tags():
+        for tag in status_tags:
             print(tag)
         print("Connecting to Outlook...")
-    _, namespace = connect_to_outlook()
+    namespace = connect_to_outlook()
 
     compose = ComposeService(namespace)
     # Parse CC/BCC recipients
@@ -1064,7 +1118,7 @@ def cmd_reply(args) -> int:
 
     if json_mode:
         if success:
-            _output_json(_json_success({"message": message, "reply_all": args.all, "draft": not send_immediately}))
+            _output_json(_json_success({"message": message, "reply_all": args.all, "draft": not send_immediately, "status_tags": status_tags}))
         else:
             _output_json(_json_error(message, "reply_failed"))
         return 0 if success else 1
@@ -1081,6 +1135,8 @@ def cmd_forward(args) -> int:
     """Handle 'forward' command."""
     json_mode = getattr(args, 'json', False)
     last_n = getattr(args, 'last', None)
+    from .core.config import ConfigManager
+    status_tags = ConfigManager().status_tags()
 
     # Resolve message_id from --last or positional arg
     message_id = args.message_id
@@ -1119,12 +1175,19 @@ def cmd_forward(args) -> int:
             return 1
         send_immediately = True
 
+    allowed, error_msg = _check_humanizer_ack(args)
+    if not allowed:
+        if json_mode:
+            _output_json(_json_error(error_msg, "humanizer_required"))
+        else:
+            print(f"✗ {error_msg}")
+        return 1
+
     if not json_mode:
-        from .core.config import ConfigManager
-        for tag in ConfigManager().status_tags():
+        for tag in status_tags:
             print(tag)
         print("Connecting to Outlook...")
-    _, namespace = connect_to_outlook()
+    namespace = connect_to_outlook()
 
     # Parse recipients
     to = [e.strip() for e in args.to.split(',')]
@@ -1145,7 +1208,7 @@ def cmd_forward(args) -> int:
 
     if json_mode:
         if success:
-            _output_json(_json_success({"message": message, "to": to, "draft": not send_immediately}))
+            _output_json(_json_success({"message": message, "to": to, "draft": not send_immediately, "status_tags": status_tags}))
         else:
             _output_json(_json_error(message, "forward_failed"))
         return 0 if success else 1
@@ -1260,7 +1323,7 @@ def cmd_cal(args) -> int:
 
     if not json_mode:
         print("Connecting to Outlook...")
-    _, namespace = connect_to_outlook()
+    namespace = connect_to_outlook()
 
     calendar = CalendarService(namespace)
 
@@ -1366,11 +1429,6 @@ def cmd_cal(args) -> int:
     return 0
 
 
-def _parse_date(date_str: str) -> datetime:
-    """Parse date string in format YYYY-MM-DD."""
-    return datetime.strptime(date_str, "%Y-%m-%d")
-
-
 def cmd_tasks(args) -> int:
     """Handle 'tasks' command."""
     if not args.tasks_command:
@@ -1381,14 +1439,14 @@ def cmd_tasks(args) -> int:
 
     if not json_mode:
         print("Connecting to Outlook...")
-    _, namespace = connect_to_outlook()
+    namespace = connect_to_outlook()
 
     from .services.tasks import TaskService
     tasks_service = TaskService(namespace)
 
     if args.tasks_command == 'list':
-        due_before = _parse_date(args.due_before) if getattr(args, 'due_before', None) else None
-        due_after = _parse_date(args.due_after) if getattr(args, 'due_after', None) else None
+        due_before = parse_date(args.due_before) if getattr(args, 'due_before', None) else None
+        due_after = parse_date(args.due_after) if getattr(args, 'due_after', None) else None
 
         if not json_mode:
             print("\nSearching tasks...")
@@ -1428,8 +1486,8 @@ def cmd_tasks(args) -> int:
             viewer.print_task_detail(task)
 
     elif args.tasks_command == 'create':
-        due_date = _parse_date(args.due) if args.due else None
-        start_date = _parse_date(args.start) if args.start else None
+        due_date = parse_date(args.due) if args.due else None
+        start_date = parse_date(args.start) if args.start else None
         reminder_date = _parse_datetime(args.reminder) if args.reminder else None
         categories = [args.category] if args.category else None
 
@@ -1504,7 +1562,7 @@ def cmd_notes(args) -> int:
 
     if not json_mode:
         print("Connecting to Outlook...")
-    _, namespace = connect_to_outlook()
+    namespace = connect_to_outlook()
 
     from .services.notes import NotesService
     notes_service = NotesService(namespace)
@@ -1623,33 +1681,12 @@ def cmd_batch(args) -> int:
 
         exit_code = 0
         try:
-            if cmd_name == 'folders':
-                exit_code = cmd_folders(sub_args)
-            elif cmd_name == 'search':
-                exit_code = cmd_search(sub_args)
-            elif cmd_name == 'export':
-                exit_code = cmd_export(sub_args)
-            elif cmd_name == 'read':
-                exit_code = cmd_read(sub_args)
-            elif cmd_name == 'send':
-                exit_code = cmd_send(sub_args)
-            elif cmd_name == 'reply':
-                exit_code = cmd_reply(sub_args)
-            elif cmd_name == 'forward':
-                exit_code = cmd_forward(sub_args)
-            elif cmd_name == 'config':
-                exit_code = cmd_config(sub_args)
-            elif cmd_name == 'people':
-                exit_code = cmd_people(sub_args)
-            elif cmd_name == 'cal':
-                exit_code = cmd_cal(sub_args)
-            elif cmd_name == 'tasks':
-                exit_code = cmd_tasks(sub_args)
-            elif cmd_name == 'notes':
-                exit_code = cmd_notes(sub_args)
-            else:
+            handler = COMMANDS.get(cmd_name)
+            if handler is None or cmd_name == 'batch':
                 exit_code = 1
                 sys.stderr.write(f"Unknown command: {cmd_name}")
+            else:
+                exit_code = handler(sub_args)
         except Exception as e:
             exit_code = 1
             sys.stderr.write(str(e))
@@ -1670,6 +1707,23 @@ def cmd_batch(args) -> int:
     return 0
 
 
+COMMANDS = {
+    'folders': cmd_folders,
+    'search': cmd_search,
+    'export': cmd_export,
+    'read': cmd_read,
+    'send': cmd_send,
+    'reply': cmd_reply,
+    'forward': cmd_forward,
+    'config': cmd_config,
+    'people': cmd_people,
+    'cal': cmd_cal,
+    'tasks': cmd_tasks,
+    'notes': cmd_notes,
+    'batch': cmd_batch,
+}
+
+
 def main() -> int:
     """Main entry point."""
     parser = create_parser()
@@ -1680,35 +1734,11 @@ def main() -> int:
         return 0
 
     try:
-        if args.command == 'folders':
-            return cmd_folders(args)
-        elif args.command == 'search':
-            return cmd_search(args)
-        elif args.command == 'export':
-            return cmd_export(args)
-        elif args.command == 'read':
-            return cmd_read(args)
-        elif args.command == 'send':
-            return cmd_send(args)
-        elif args.command == 'reply':
-            return cmd_reply(args)
-        elif args.command == 'forward':
-            return cmd_forward(args)
-        elif args.command == 'config':
-            return cmd_config(args)
-        elif args.command == 'people':
-            return cmd_people(args)
-        elif args.command == 'cal':
-            return cmd_cal(args)
-        elif args.command == 'tasks':
-            return cmd_tasks(args)
-        elif args.command == 'notes':
-            return cmd_notes(args)
-        elif args.command == 'batch':
-            return cmd_batch(args)
-        else:
+        handler = COMMANDS.get(args.command)
+        if handler is None:
             parser.print_help()
             return 1
+        return handler(args)
     except KeyboardInterrupt:
         print("\nAborted.")
         return 130

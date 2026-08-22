@@ -25,8 +25,8 @@ from outlook_cli.services.search import SearchService  # no win32com needed
 from outlook_cli.core.folders import list_all_folders  # no win32com needed
 ```
 
-`ComposeService` is lazy via `get_compose_service(namespace)` — don't import it
-at module level.
+`ComposeService` imports no win32com at module level — import it directly from
+`outlook_cli.services.compose`.
 
 ### 3. Monkey-patch COM conversion
 `_extract_from_folder` iterates COM items and calls
@@ -69,7 +69,7 @@ python3 -m venv .venv
 .venv/bin/python -m pytest tests/ -v
 ```
 
-All 348 tests should pass on Linux/WSL without pywin32 installed.
+All 347 tests should pass on Linux/WSL without pywin32 installed.
 
 ## Windows smoke test
 

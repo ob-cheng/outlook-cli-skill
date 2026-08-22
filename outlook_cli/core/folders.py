@@ -153,12 +153,6 @@ def find_folder_across_stores(namespace, folder_name: str):
     """
     target = folder_name.lower().strip()
 
-    default_map = {
-        'calendar': 9, 'tasks': 13, 'notes': 12,
-        'inbox': 6, 'sent items': 5, 'drafts': 16,
-        'deleted items': 3, 'junk email': 23, 'contacts': 10,
-    }
-
     def _folder_has_items(folder):
         """Check if a folder has items, swallowing exceptions."""
         try:
@@ -167,9 +161,9 @@ def find_folder_across_stores(namespace, folder_name: str):
             return False
 
     # Step 1: Default store first (handles 95% of cases and is stable)
-    if target in default_map:
+    if target in DEFAULT_FOLDERS:
         try:
-            folder = namespace.GetDefaultFolder(default_map[target])
+            folder = namespace.GetDefaultFolder(DEFAULT_FOLDERS[target])
             if _folder_has_items(folder):
                 return folder
         except Exception:
@@ -202,9 +196,9 @@ def find_folder_across_stores(namespace, folder_name: str):
             continue
 
     # Step 3: Fallback — default store folder even if empty
-    if target in default_map:
+    if target in DEFAULT_FOLDERS:
         try:
-            return namespace.GetDefaultFolder(default_map[target])
+            return namespace.GetDefaultFolder(DEFAULT_FOLDERS[target])
         except Exception:
             pass
     return None

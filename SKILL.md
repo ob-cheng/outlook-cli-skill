@@ -285,6 +285,24 @@ All compose commands create drafts. Direct sending requires both `send_mode: sen
 - [ ] Batch mode used for multi-command workflows (search → read → reply)
 - [ ] Narrowed search with `--days` or `--limit` on large inboxes
 
+## Updating the Skill
+
+To pull the latest version:
+
+```bash
+cd "${SKILL_DIR}"
+git pull
+pip install -r "${SKILL_DIR}/requirements.txt"
+```
+
+Configuration and user data live in `~/.outlook-cli/` — outside the repo — so `git pull` won't touch settings, people data, or any personal state.
+
+If `git pull` fails due to local modifications:
+
+```bash
+git stash && git pull && git stash pop
+```
+
 > **Workflows & patterns:** See [references/workflows.md](references/workflows.md).
 > **Command details:** See [references/commands.md](references/commands.md) when you need all flags/options beyond the Quick Reference table.
 > **Config reference:** See [references/config.md](references/config.md) for draft instructions, humanizer, and send mode settings.

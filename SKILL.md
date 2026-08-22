@@ -104,10 +104,10 @@ Before every send/reply/forward:
 1. Run `outlook.py config show` to read all settings (see [references/config.md](references/config.md))
 2. Compose the email body
 3. If `draft_instructions` is set → follow them while drafting
-4. If `humanizer_enabled` is true → load `humanizer` skill and run the pattern checklist
+4. If `humanizer_enabled` is true → load `humanizer` skill, run the pattern checklist, then pass `--humanized` to confirm you did. **The CLI rejects send/reply/forward with `humanizer_required` when the flag is on and `--humanized` is missing** — it can't check the prose, so `--humanized` is your logged assertion that you ran the step, not a free pass to skip it.
 5. Pass the final body to the CLI
 
-The CLI prints status tags so skipped steps are visible in the output.
+The CLI prints status tags (and includes them as `status_tags` in `--json` output) so skipped steps are visible.
 
 ## People Directory
 
@@ -233,6 +233,8 @@ python outlook.py batch --commands '[
 ]'
 ```
 Prefer batch when you know the full command pipeline upfront (e.g., search → read → reply). Saves ~40% on 3-command workflows vs. separate invocations.
+
+When `humanizer_enabled` is on, humanize each body **before** building the batch array, and add `--humanized` to every `send`/`reply`/`forward` command in it — each runs the same gate, so any item missing the flag fails with `humanizer_required` while the rest still run.
 
 ### Date filtering options
 - `--days N` — last N days (default 7)

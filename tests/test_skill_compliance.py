@@ -7,6 +7,7 @@ the skill works as agents expect. Uses mocks to avoid COM dependencies.
 import json
 import pytest
 from datetime import datetime
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 
@@ -111,6 +112,45 @@ class TestDraftInstructionsAndHumanizer:
         tags = mgr.status_tags()
 
         assert "[humanizer enabled]" in tags
+
+
+class TestHumanizerGate:
+    """SKILL: when humanizer_enabled is on, compose requires --humanized."""
+
+    def _cfg(self, tmp_path, enabled):
+        config_path = tmp_path / "config.json"
+        config_path.write_text(json.dumps({"humanizer_enabled": enabled}))
+        return ConfigManager(config_path=config_path)
+
+    def test_disabled_allows_without_flag(self, tmp_path):
+        """Humanizer off → no gate, --humanized not needed."""
+        from outlook_cli.cli import _check_humanizer_ack
+        args = SimpleNamespace(humanized=False)
+
+        allowed, err = _check_humanizer_ack(args, cfg=self._cfg(tmp_path, False))
+
+        assert allowed is True
+        assert err is None
+
+    def test_enabled_blocks_without_flag(self, tmp_path):
+        """Humanizer on + no --humanized → blocked with humanizer_required intent."""
+        from outlook_cli.cli import _check_humanizer_ack
+        args = SimpleNamespace(humanized=False)
+
+        allowed, err = _check_humanizer_ack(args, cfg=self._cfg(tmp_path, True))
+
+        assert allowed is False
+        assert "--humanized" in err
+
+    def test_enabled_allows_with_flag(self, tmp_path):
+        """Humanizer on + --humanized → allowed."""
+        from outlook_cli.cli import _check_humanizer_ack
+        args = SimpleNamespace(humanized=True)
+
+        allowed, err = _check_humanizer_ack(args, cfg=self._cfg(tmp_path, True))
+
+        assert allowed is True
+        assert err is None
 
 
 class TestPeopleDirectory:

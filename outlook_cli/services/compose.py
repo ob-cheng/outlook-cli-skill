@@ -49,10 +49,14 @@ class ComposeService:
 
             # Subject and body
             mail.Subject = subject
+            # Touching GetInspector forces Outlook to auto-insert the default
+            # "new message" signature into Body/HTMLBody, same as opening a
+            # compose window in the UI — CreateItem() alone never does this.
+            mail.GetInspector
             if html:
-                mail.HTMLBody = body
+                mail.HTMLBody = body + "<br><br>" + mail.HTMLBody
             else:
-                mail.Body = body
+                mail.Body = body + "\n\n" + mail.Body
 
             # Attachments
             if attachments:

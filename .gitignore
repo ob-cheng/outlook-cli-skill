@@ -24,3 +24,6 @@ extraction_state.json
 # OS
 .DS_Store
 Thumbs.db
+
+# CodeGraph data files — local to each machine, not for committing.
+.codegraph/

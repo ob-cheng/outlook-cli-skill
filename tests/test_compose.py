@@ -81,6 +81,61 @@ class TestSendEmailSignature:
         assert mail.HTMLBody == "<p>Hello</p><br><br><p>Best regards</p>"
 
 
+class TestRecipientResolution:
+    """Recipients set as a raw string stay unresolved until checked, which
+    Outlook's compose UI shows as an error even for valid addresses (bug
+    report: recipient entered correctly but shown as an error)."""
+
+    def _service_with_mail(self, mail):
+        namespace = MagicMock()
+        namespace.Application.CreateItem.return_value = mail
+        return ComposeService(namespace)
+
+    def test_send_email_resolves_recipients(self):
+        mail = MagicMock()
+        service = self._service_with_mail(mail)
+
+        service.send_email(to=["a@x.com"], subject="Hi", body="Hello")
+
+        mail.Recipients.ResolveAll.assert_called_once()
+
+    def test_forward_resolves_recipients(self):
+        original = MagicMock()
+        forward = MagicMock()
+        original.Forward.return_value = forward
+        namespace = MagicMock()
+        namespace.GetItemFromID.return_value = original
+        service = ComposeService(namespace)
+
+        service.forward(message_id="1", to=["a@x.com"])
+
+        forward.Recipients.ResolveAll.assert_called_once()
+
+    def test_reply_resolves_recipients_when_cc_added(self):
+        original = MagicMock()
+        reply = MagicMock()
+        original.Reply.return_value = reply
+        namespace = MagicMock()
+        namespace.GetItemFromID.return_value = original
+        service = ComposeService(namespace)
+
+        service.reply(message_id="1", body="Hi", cc=["a@x.com"])
+
+        reply.Recipients.ResolveAll.assert_called_once()
+
+    def test_reply_skips_resolve_when_no_extra_recipients(self):
+        original = MagicMock()
+        reply = MagicMock()
+        original.Reply.return_value = reply
+        namespace = MagicMock()
+        namespace.GetItemFromID.return_value = original
+        service = ComposeService(namespace)
+
+        service.reply(message_id="1", body="Hi")
+
+        reply.Recipients.ResolveAll.assert_not_called()
+
+
 class TestPrependHtml:
     """new content must land inside <body>, not before <html> (font/style bug)."""
 

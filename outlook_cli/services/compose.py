@@ -90,6 +90,10 @@ class ComposeService:
                 mail.CC = "; ".join(cc)
             if bcc:
                 mail.BCC = "; ".join(bcc)
+            # Setting To/CC/BCC as a string leaves recipients unresolved until
+            # Outlook checks them, which shows as an error in the compose UI
+            # even for valid addresses. ResolveAll forces that check now.
+            mail.Recipients.ResolveAll()
 
             # Subject and body
             mail.Subject = subject
@@ -165,6 +169,8 @@ class ComposeService:
                 for addr in bcc:
                     recipient = reply.Recipients.Add(addr)
                     recipient.Type = 3  # olBCC
+            if cc or bcc:
+                reply.Recipients.ResolveAll()
 
             # Add body (prepend to existing quoted text)
             if html:
@@ -228,6 +234,7 @@ class ComposeService:
                 forward.CC = "; ".join(cc)
             if bcc:
                 forward.BCC = "; ".join(bcc)
+            forward.Recipients.ResolveAll()
 
             # Add forwarding message
             if body:

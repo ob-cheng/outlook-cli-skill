@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import MagicMock
 
-from outlook_cli.services.compose import ComposeService
+from outlook_cli.services.compose import ComposeService, _as_html_fragment, _prepend_html
 
 
 class TestCCBCCParsing:
@@ -65,7 +65,7 @@ class TestSendEmailSignature:
         mail.Body = "Best regards,\nSomeone"
         service = self._service_with_mail(mail)
 
-        service.send_email(to=["a@x.com"], subject="Hi", body="Hello there")
+        service.send_email(to=["a@x.com"], subject="Hi", body="Hello there", html=False)
 
         assert mail.Body == "Hello there\n\nBest regards,\nSomeone"
 
@@ -79,3 +79,47 @@ class TestSendEmailSignature:
         )
 
         assert mail.HTMLBody == "<p>Hello</p><br><br><p>Best regards</p>"
+
+
+class TestPrependHtml:
+    """new content must land inside <body>, not before <html> (font/style bug)."""
+
+    def test_inserts_after_body_tag_not_before_html(self):
+        doc = '<html><head><style>p{font-family:"Open Sans"}</style></head><body>sig</body></html>'
+        result = _prepend_html(doc, "hello<br><br>")
+        assert result.startswith("<html>")
+        assert "<body>hello<br><br>sig</body>" in result
+
+    def test_no_body_tag_falls_back_to_prepend(self):
+        assert _prepend_html("just text", "hello") == "hellojust text"
+
+    def test_reuses_signature_font_style(self):
+        doc = (
+            "<html><body><p class=MsoNormal>"
+            "<span style='font-size:10.0pt;font-family:\"Open Sans\",sans-serif'>Best regards</span>"
+            "</p></body></html>"
+        )
+        result = _prepend_html(doc, "hello<br><br>")
+
+        assert (
+            "<span style='font-size:10.0pt;font-family:\"Open Sans\",sans-serif'>"
+            "hello<br><br></span>" in result
+        )
+        assert result.index("hello") < result.index("Best regards")
+
+    def test_extracted_style_keeps_original_quote_char(self):
+        """A double-quoted font-family inside the style must not break the attribute."""
+        doc = "<body><span style='font-family:\"Open Sans\"'>sig</span></body>"
+        result = _prepend_html(doc, "x")
+        assert 'style=\'font-family:"Open Sans"\'' in result
+
+
+class TestAsHtmlFragment:
+    """plain-text bodies need <br> so multi-line content doesn't collapse."""
+
+    def test_plain_text_newlines_become_br(self):
+        assert _as_html_fragment("line one\nline two") == "line one<br>\nline two"
+
+    def test_existing_markup_left_untouched(self):
+        body = "<p>already html</p>\nmore"
+        assert _as_html_fragment(body) == body

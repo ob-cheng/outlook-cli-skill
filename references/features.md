@@ -59,8 +59,9 @@ Requires `send_mode: send` in config + `--send` flag. See [direct-send.md](direc
 - Non-existent paths silently skipped
 
 ### HTML vs plain text
-- `--html`: body set as `HTMLBody`
-- Without: plain `Body`
+- HTML is the default: body set as `HTMLBody`, inserted inside `<body>` so it inherits the signature's font/style
+- `--plain`: plain `Body` instead
+- Plain-text bodies passed while HTML is active have `\n` converted to `<br>` so paragraphs still show as separate lines
 - In reply/forward, body inserted before quoted content
 
 ---

@@ -62,7 +62,8 @@ python outlook.py send --to ADDRESS --subject TEXT --body TEXT [options]
 | `--cc ADDRESS` | CC recipients (comma-separated) |
 | `--bcc ADDRESS` | BCC recipients (comma-separated) |
 | `--attach PATH` | File attachment (can specify multiple) |
-| `--html` | Body is HTML formatted |
+| `--html` | Body is HTML (default) |
+| `--plain` | Body is plain text instead of HTML |
 | `--send` | Send immediately (requires `send_mode: send` in config) |
 | `--json` | Output as JSON |
 
@@ -83,7 +84,8 @@ python outlook.py reply --last [N] --body TEXT [options]
 | `--cc ADDRESS` | Additional CC recipients (comma-separated) |
 | `--bcc ADDRESS` | Additional BCC recipients (comma-separated) |
 | `--attach PATH` | Add attachment (can specify multiple) |
-| `--html` | Body is HTML |
+| `--html` | Body is HTML (default) |
+| `--plain` | Body is plain text instead of HTML |
 | `--send` | Send immediately (requires `send_mode: send` in config) |
 | `--json` | Output as JSON |
 
@@ -104,7 +106,8 @@ python outlook.py forward --last [N] --to ADDRESS [options]
 | `--cc ADDRESS` | CC recipients |
 | `--bcc ADDRESS` | BCC recipients |
 | `--attach PATH` | Additional attachment |
-| `--html` | Body is HTML |
+| `--html` | Body is HTML (default) |
+| `--plain` | Body is plain text instead of HTML |
 | `--send` | Send immediately (requires `send_mode: send` in config) |
 | `--json` | Output as JSON |
 

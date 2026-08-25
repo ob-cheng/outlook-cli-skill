@@ -39,7 +39,9 @@ def build_parser():
     rp.add_argument("--body", "-b", type=str, required=True)
     rp.add_argument("--all", action="store_true")
     rp.add_argument("--attach", "-a", action="append")
-    rp.add_argument("--html", action="store_true")
+    rp.add_argument("--html", dest="html", action="store_true")
+    rp.add_argument("--plain", dest="html", action="store_false")
+    rp.set_defaults(html=True)
     rp.add_argument("--cc", type=str, default="")
     rp.add_argument("--bcc", type=str, default="")
     rp.add_argument("--send", action="store_true")
@@ -53,7 +55,9 @@ def build_parser():
     fp.add_argument("--cc", type=str, default="")
     fp.add_argument("--bcc", type=str, default="")
     fp.add_argument("--attach", "-a", action="append")
-    fp.add_argument("--html", action="store_true")
+    fp.add_argument("--html", dest="html", action="store_true")
+    fp.add_argument("--plain", dest="html", action="store_false")
+    fp.set_defaults(html=True)
     fp.add_argument("--send", action="store_true")
     fp.add_argument("--json", action="store_true")
 
@@ -65,7 +69,9 @@ def build_parser():
     sp2.add_argument("--cc", type=str, default="")
     sp2.add_argument("--bcc", type=str, default="")
     sp2.add_argument("--attach", "-a", action="append")
-    sp2.add_argument("--html", action="store_true")
+    sp2.add_argument("--html", dest="html", action="store_true")
+    sp2.add_argument("--plain", dest="html", action="store_false")
+    sp2.set_defaults(html=True)
     sp2.add_argument("--send", action="store_true")
     sp2.add_argument("--json", action="store_true")
 
@@ -162,6 +168,16 @@ class TestReplyArgs:
         args = parser.parse_args(["reply", "abc123", "--body", "test", "--send", "--json"])
         assert args.send is True
         assert args.json is True
+
+    def test_html_defaults_true(self):
+        parser = build_parser()
+        args = parser.parse_args(["reply", "abc123", "--body", "test"])
+        assert args.html is True
+
+    def test_plain_flag_overrides_default(self):
+        parser = build_parser()
+        args = parser.parse_args(["reply", "abc123", "--body", "test", "--plain"])
+        assert args.html is False
 
 
 class TestSearchArgs:

@@ -1,6 +1,50 @@
 """Email compose and send service."""
 
+import re
 from pathlib import Path
+
+_BODY_TAG_RE = re.compile(r"<body[^>]*>", re.IGNORECASE)
+_HTML_TAG_RE = re.compile(r"<[a-zA-Z][^>]*>")
+_SPAN_STYLE_RE = re.compile(r"<span[^>]*\bstyle=(['\"])(.*?)\1", re.IGNORECASE | re.DOTALL)
+
+
+def _as_html_fragment(body: str) -> str:
+    """Turn a plain-text body into HTML that still shows line breaks.
+
+    HTML collapses bare newlines, so a caller passing plain multi-line text
+    (the common case, since html now defaults to True) would otherwise render
+    as one run-on paragraph. Bodies that already contain markup are left
+    untouched.
+    """
+    if _HTML_TAG_RE.search(body):
+        return body
+    return body.replace("\n", "<br>\n")
+
+
+def _prepend_html(existing_html: str, new_content: str) -> str:
+    """Insert new_content just inside <body>, styled to match the signature.
+
+    existing_html (Outlook's own reply/forward/signature markup) is a full
+    document, but Word doesn't set font via CSS on <body> — every run of
+    text carries its own inline <span style="font-family:...;font-size:...">.
+    Content dropped in unstyled falls back to Outlook's compose-window
+    default font, not the signature's font. Reusing the signature's own
+    first span style keeps the two visually consistent.
+    """
+    match = _BODY_TAG_RE.search(existing_html)
+    if not match:
+        return new_content + existing_html
+    insert_at = match.end()
+
+    style_match = _SPAN_STYLE_RE.search(existing_html)
+    if style_match:
+        quote, style = style_match.group(1), style_match.group(2)
+        new_content = (
+            f"<p class=MsoNormal><span style={quote}{style}{quote}>"
+            f"{new_content}</span></p>"
+        )
+
+    return existing_html[:insert_at] + new_content + existing_html[insert_at:]
 
 
 class ComposeService:
@@ -18,7 +62,7 @@ class ComposeService:
         cc: list[str] | None = None,
         bcc: list[str] | None = None,
         attachments: list[str | Path] | None = None,
-        html: bool = False,
+        html: bool = True,
         send_immediately: bool = True,
     ) -> tuple[bool, str]:
         """Send a new email.
@@ -54,7 +98,9 @@ class ComposeService:
             # compose window in the UI — CreateItem() alone never does this.
             mail.GetInspector
             if html:
-                mail.HTMLBody = body + "<br><br>" + mail.HTMLBody
+                mail.HTMLBody = _prepend_html(
+                    mail.HTMLBody, _as_html_fragment(body) + "<br><br>"
+                )
             else:
                 mail.Body = body + "\n\n" + mail.Body
 
@@ -82,7 +128,7 @@ class ComposeService:
         body: str,
         reply_all: bool = False,
         attachments: list[str | Path] | None = None,
-        html: bool = False,
+        html: bool = True,
         send_immediately: bool = True,
         cc: list[str] | None = None,
         bcc: list[str] | None = None,
@@ -122,7 +168,9 @@ class ComposeService:
 
             # Add body (prepend to existing quoted text)
             if html:
-                reply.HTMLBody = body + "<br><br>" + reply.HTMLBody
+                reply.HTMLBody = _prepend_html(
+                    reply.HTMLBody, _as_html_fragment(body) + "<br><br>"
+                )
             else:
                 reply.Body = body + "\n\n" + reply.Body
 
@@ -152,7 +200,7 @@ class ComposeService:
         cc: list[str] | None = None,
         bcc: list[str] | None = None,
         attachments: list[str | Path] | None = None,
-        html: bool = False,
+        html: bool = True,
         send_immediately: bool = True,
     ) -> tuple[bool, str]:
         """Forward an existing email.
@@ -184,7 +232,9 @@ class ComposeService:
             # Add forwarding message
             if body:
                 if html:
-                    forward.HTMLBody = body + "<br><br>" + forward.HTMLBody
+                    forward.HTMLBody = _prepend_html(
+                        forward.HTMLBody, _as_html_fragment(body) + "<br><br>"
+                    )
                 else:
                     forward.Body = body + "\n\n" + forward.Body
 

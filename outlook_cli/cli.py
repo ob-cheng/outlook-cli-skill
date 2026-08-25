@@ -246,9 +246,17 @@ def create_parser() -> argparse.ArgumentParser:
     )
     send_parser.add_argument(
         '--html',
+        dest='html',
         action='store_true',
-        help='Body is HTML format',
+        help='Body is HTML format (default)',
     )
+    send_parser.add_argument(
+        '--plain',
+        dest='html',
+        action='store_false',
+        help='Body is plain text instead of HTML',
+    )
+    send_parser.set_defaults(html=True)
     send_parser.add_argument(
         '--send',
         action='store_true',
@@ -300,9 +308,17 @@ def create_parser() -> argparse.ArgumentParser:
     )
     reply_parser.add_argument(
         '--html',
+        dest='html',
         action='store_true',
-        help='Body is HTML format',
+        help='Body is HTML format (default)',
     )
+    reply_parser.add_argument(
+        '--plain',
+        dest='html',
+        action='store_false',
+        help='Body is plain text instead of HTML',
+    )
+    reply_parser.set_defaults(html=True)
     reply_parser.add_argument(
         '--cc',
         type=str,
@@ -376,9 +392,17 @@ def create_parser() -> argparse.ArgumentParser:
     )
     forward_parser.add_argument(
         '--html',
+        dest='html',
         action='store_true',
-        help='Body is HTML format',
+        help='Body is HTML format (default)',
     )
+    forward_parser.add_argument(
+        '--plain',
+        dest='html',
+        action='store_false',
+        help='Body is plain text instead of HTML',
+    )
+    forward_parser.set_defaults(html=True)
     forward_parser.add_argument(
         '--send',
         action='store_true',
